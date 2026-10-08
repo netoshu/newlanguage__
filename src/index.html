@@ -1,11 +1,1 @@
-<!doctype html>
-<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>newlanguage_ / Gesture Studio</title><link rel="stylesheet" href="./style.css"></head>
-<body><div id="app">
-  <header><div class="brand">newlanguage_ <span>GESTURE STUDIO</span></div><div id="status">GAMEPAD / WAITING</div></header>
-  <main><canvas id="stage"></canvas><section class="hud">
-    <div class="emotion"><small>EMOTION</small><strong id="emotion">IDLE</strong><div class="meter"><i id="intensity"></i></div><small id="intensityText">INTENSITY 0.00</small></div>
-    <div class="sticks"><div><small>L STICK</small><b id="leftData">0.00 / 0.00</b></div><div><small>R STICK</small><b id="rightData">0.00 / 0.00</b></div></div>
-    <div class="controls"><button id="record">● RECORD</button><button id="export">EXPORT LOG</button><button id="look">LOOK: BITMAP</button></div>
-  </section></main>
-  <footer><span>60 FPS OFFLINE RENDER PIPELINE</span><span id="timer">00:00.000</span></footer>
-</div><script type="module" src="./app.js"></script></body></html>
+<!doctype html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>newlanguage_ — Gesture Studio</title><link rel="stylesheet" href="style.css"></head><body><header><strong>newlanguage_</strong><span>GESTURE STUDIO / WEB</span><span id="status">GAMEPAD / WAITING</span></header><main><canvas id="stage"></canvas></main><section class="hud"><div class="emotion"><small>EMOTION</small><b id="emotion">IDLE</b></div><div class="meter"><small id="intensityText">INTENSITY 0.00</small><div><i id="intensity"></i></div></div><div class="sticks"><small>L STICK</small><b id="leftData">0.00 / 0.00</b><small>R STICK</small><b id="rightData">0.00 / 0.00</b></div><div class="controls"><button id="record">● RECORD</button><button id="export">EXPORT JSON</button><button id="exportCsv">EXPORT CSV</button><button id="look">LOOK: BITMAP</button></div></section><footer><span>WEB / 60 FPS VISUAL ENGINE</span><span id="timer">00:00.000</span><span>newlanguage_</span></footer><script type="module" src="app.js"></script></body></html>
