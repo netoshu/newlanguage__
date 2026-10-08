@@ -1,62 +1,99 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>newlanguage_</title>
   <style>
-    :root {
-      color-scheme: light;
+    :root { color-scheme: dark; }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; width: 100%; height: 100%; overflow: hidden; }
+    body {
+      background: #030305; color: #f4f4f5;
       font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
     }
-    * { box-sizing: border-box; }
-    body {
-      margin: 0;
-      min-height: 100vh;
-      display: grid;
-      place-items: center;
-      background: #f5f5f2;
-      color: #171717;
+    .stage {
+      position: relative; min-height: 100svh; display: grid; place-items: center;
+      isolation: isolate; overflow: hidden;
+      background: radial-gradient(circle at 50% 50%, rgba(255,255,255,.035), transparent 38%), #030305;
     }
-    main {
-      width: min(900px, 100%);
-      padding: 48px 28px;
+    .grain {
+      position: absolute; inset: -50%; opacity: .08; pointer-events: none; z-index: 10;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.95' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.55'/%3E%3C/svg%3E");
     }
+    .orb {
+      position: absolute; width: 38vw; height: 38vw; min-width: 300px; min-height: 300px;
+      border-radius: 42% 58% 55% 45% / 46% 42% 58% 54%;
+      border: 1px solid rgba(255,255,255,.16);
+      background: linear-gradient(135deg, rgba(255,255,255,.12), rgba(255,255,255,.015) 55%, rgba(255,255,255,.08));
+      backdrop-filter: blur(8px);
+      box-shadow: 0 0 90px rgba(177,112,255,.18), 0 0 160px rgba(57,193,255,.12), inset 0 0 60px rgba(255,255,255,.05);
+      animation: float 11s ease-in-out infinite, morph 14s ease-in-out infinite;
+      transform: rotate(-18deg);
+    }
+    .orb::before, .orb::after {
+      content: ""; position: absolute; inset: 9%; border-radius: inherit;
+      border: 1px solid rgba(255,255,255,.08); box-shadow: 0 0 45px rgba(255,255,255,.06);
+    }
+    .orb::after {
+      inset: -18%; border: 0;
+      background: conic-gradient(from 120deg, transparent, rgba(148,86,255,.16), transparent 30%, rgba(71,207,255,.12), transparent 65%);
+      filter: blur(24px); animation: spin 18s linear infinite;
+    }
+    .orb.two {
+      width: 22vw; height: 22vw; min-width: 190px; min-height: 190px;
+      left: 9%; top: 14%; opacity: .65; transform: rotate(28deg);
+      animation-delay: -4s, -7s;
+      background: linear-gradient(120deg, rgba(84,207,255,.10), rgba(255,255,255,.02), rgba(198,88,255,.11));
+    }
+    .orb.three {
+      width: 18vw; height: 18vw; min-width: 150px; min-height: 150px;
+      right: 7%; bottom: 9%; opacity: .55; transform: rotate(-32deg);
+      animation-delay: -7s, -2s;
+    }
+    .beam {
+      position: absolute; width: 75vw; height: 2px;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,.26), transparent);
+      filter: blur(.5px); transform: rotate(-19deg);
+      animation: sweep 8s ease-in-out infinite;
+    }
+    .content { position: relative; z-index: 5; text-align: center; mix-blend-mode: screen; }
     .eyebrow {
-      margin: 0 0 18px;
-      font-size: 13px;
-      letter-spacing: .14em;
-      text-transform: uppercase;
-      color: #737373;
+      margin-bottom: 18px; font: 500 10px/1.2 ui-monospace, SFMono-Regular, Menlo, monospace;
+      letter-spacing: .42em; text-transform: uppercase; color: rgba(255,255,255,.48);
     }
     h1 {
-      margin: 0;
-      font-size: clamp(64px, 13vw, 150px);
-      line-height: .88;
-      letter-spacing: -.07em;
-      font-weight: 700;
+      margin: 0; font-size: clamp(4.5rem, 13vw, 12rem); line-height: .82;
+      letter-spacing: -.075em; font-weight: 600; text-shadow: 0 0 42px rgba(255,255,255,.12);
     }
-    .rule {
-      width: 100%;
-      height: 1px;
-      margin: 32px 0 20px;
-      background: #171717;
+    .sub {
+      margin-top: 26px; font-size: clamp(.72rem, 1.1vw, .92rem);
+      letter-spacing: .28em; text-transform: uppercase; color: rgba(255,255,255,.44);
     }
-    p {
-      max-width: 520px;
-      margin: 0;
-      font-size: 18px;
-      line-height: 1.5;
-      color: #525252;
+    .corner {
+      position: absolute; z-index: 6; font: 500 9px/1.4 ui-monospace, SFMono-Regular, Menlo, monospace;
+      letter-spacing: .2em; text-transform: uppercase; color: rgba(255,255,255,.3);
+    }
+    .tl { top: 28px; left: 32px; } .br { right: 32px; bottom: 28px; }
+    @keyframes float { 0%,100%{translate:0 0} 50%{translate:3vw -2vh} }
+    @keyframes morph { 0%,100%{border-radius:42% 58% 55% 45% / 46% 42% 58% 54%} 50%{border-radius:58% 42% 40% 60% / 54% 58% 42% 46%} }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    @keyframes sweep { 0%,100%{translate:-22vw 0;opacity:0} 35%,65%{opacity:1} 50%{translate:22vw 0} }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { animation-duration: 1ms !important; animation-iteration-count: 1 !important; }
     }
   </style>
 </head>
 <body>
-  <main>
-    <p class="eyebrow">A new language</p>
-    <h1>newlanguage_</h1>
-    <div class="rule"></div>
-    <p>A simple starting point for exploring a new way of expressing ideas through code.</p>
+  <main class="stage">
+    <div class="orb"></div><div class="orb two"></div><div class="orb three"></div><div class="beam"></div>
+    <div class="content">
+      <div class="eyebrow">experimental interface / 001</div>
+      <h1>newlanguage_</h1>
+      <div class="sub">motion · form · signal</div>
+    </div>
+    <div class="corner tl">NL / SYSTEM</div><div class="corner br">00:00:01 — LIVE</div>
+    <div class="grain"></div>
   </main>
 </body>
 </html>
