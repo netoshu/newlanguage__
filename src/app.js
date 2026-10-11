@@ -1,6 +1,15 @@
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.181.2/build/three.module.js';
-const $=id=>document.querySelector(id), canvas=$('stage');
-const renderer=new THREE.WebGLRenderer({canvas,antialias:true}); renderer.setPixelRatio(Math.min(devicePixelRatio,2)); renderer.setSize(innerWidth,innerHeight); renderer.setClearColor(0x030305,1);
+const $=id=>document.querySelector(id);
+// Create the renderer's own canvas rather than passing a possibly stale/null DOM reference.
+const stage=document.querySelector('main');
+let canvas=document.getElementById('stage');
+if(!canvas){canvas=document.createElement('canvas');canvas.id='stage';if(stage)stage.appendChild(canvas);}
+const renderer=new THREE.WebGLRenderer({antialias:true});
+if(canvas && canvas.parentNode) canvas.replaceWith(renderer.domElement);
+renderer.domElement.id='stage';
+renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,2));
+renderer.setSize(Math.max(window.innerWidth,1),Math.max(window.innerHeight,1));
+renderer.setClearColor(0x030305,1);
 const scene=new THREE.Scene(), camera=new THREE.OrthographicCamera(-1,1,1,-1,0,1);
 const uniforms={uTime:{value:0},uEnergy:{value:0},uEmotion:{value:0},uLook:{value:0}};
 const vs='varying vec2 vUv; void main(){vUv=uv;gl_Position=vec4(position,1.0);}';
