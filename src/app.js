@@ -152,18 +152,22 @@ function draw(ms){
     const x=Math.cos(a)*(r+jitter),y=Math.sin(a)*(r+jitter);
     const size=(state.look===1?1.8:state.look===3?2.2:1.1)*(0.5+state.texture);
     ctx.globalAlpha=.15+.45*(.5+.5*Math.sin(phase*1.7+i));
-    ctx.fillStyle=palette[i%palette.length];\n    if(state.emotion==='ANNOYANCE'&&state.texture>.5){ctx.beginPath();ctx.moveTo(x,y-size*2);ctx.lineTo(x+size*1.5,y+size);ctx.lineTo(x-size*1.5,y+size);ctx.closePath();ctx.fill();continue;}
+    ctx.fillStyle=palette[i%palette.length];
+    if(state.emotion==='ANNOYANCE'&&state.texture>.5){ctx.beginPath();ctx.moveTo(x,y-size*2);ctx.lineTo(x+size*1.5,y+size);ctx.lineTo(x-size*1.5,y+size);ctx.closePath();ctx.fill();continue;}
     if(state.look===2){ctx.strokeStyle=ctx.fillStyle;ctx.lineWidth=.8;ctx.beginPath();ctx.moveTo(x-4,y-3);ctx.lineTo(x+4,y+3);ctx.stroke();}
     else ctx.fillRect(x-size/2,y-size/2,size,size);
   }
-  if(state.pointingUntil&&t<state.pointingUntil){ctx.globalAlpha=.8;ctx.strokeStyle='#b4f5ff';ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(0,0);ctx.lineTo((state.pointX||0)*d*.45, -(state.pointY||0)*d*.45);ctx.stroke();}\n  state.particles=state.particles.filter(p=>p.life>0);
+  if(state.pointingUntil&&t<state.pointingUntil){ctx.globalAlpha=.8;ctx.strokeStyle='#b4f5ff';ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(0,0);ctx.lineTo((state.pointX||0)*d*.45, -(state.pointY||0)*d*.45);ctx.stroke();}
+  state.particles=state.particles.filter(p=>p.life>0);
   for(const p of state.particles){const r=p.r+(1-p.life)*p.v;ctx.globalAlpha=p.life;ctx.fillStyle='#a9eaff';ctx.beginPath();ctx.arc(Math.cos(p.a)*r,Math.sin(p.a)*r,2+p.life*2,0,Math.PI*2);ctx.fill();p.life-=.012;}
-  ctx.restore();ctx.globalAlpha=1;\n  if(state.dimension===3){ctx.save();ctx.globalAlpha=.18;ctx.strokeStyle='#a8b8ff';for(let i=0;i<9;i++){ctx.beginPath();ctx.ellipse(cx,cy,d*(.12+i*.025),d*(.045+i*.012),t*.12+i*.08,0,Math.PI*2);ctx.stroke();}ctx.restore();}
+  ctx.restore();ctx.globalAlpha=1;
+  if(state.dimension===3){ctx.save();ctx.globalAlpha=.18;ctx.strokeStyle='#a8b8ff';for(let i=0;i<9;i++){ctx.beginPath();ctx.ellipse(cx,cy,d*(.12+i*.025),d*(.045+i*.012),t*.12+i*.08,0,Math.PI*2);ctx.stroke();}ctx.restore();}
 }
 function format(s){const m=Math.floor(s/60),q=Math.floor(s%60),ms=Math.floor((s%1)*1000);return String(m).padStart(2,'0')+':'+String(q).padStart(2,'0')+'.'+String(ms).padStart(3,'0');}
 $('record').onclick=()=>{state.recording=!state.recording;if(state.recording){state.samples=[];state.start=performance.now();$('record').classList.add('active');$('record').textContent='■ STOP';}else{$('record').classList.remove('active');$('record').textContent='● RECORD';}};
 $('export').onclick=()=>download('newlanguage-session.json',JSON.stringify({version:2,frameRate:60,createdAt:new Date().toISOString(),samples:state.samples},null,2),'application/json');
-$('exportCsv').onclick=()=>{const h='t,lx,ly,rx,ry,emotion,intensity,event';const rows=state.samples.map(s=>[s.t,s.lx??'',s.ly??'',s.rx??'',s.ry??'',s.emotion??'',s.intensity??'',s.event??''].join(','));download('newlanguage-session.csv',[h,...rows].join('\n'),'text/csv');};
+$('exportCsv').onclick=()=>{const h='t,lx,ly,rx,ry,emotion,intensity,event';const rows=state.samples.map(s=>[s.t,s.lx??'',s.ly??'',s.rx??'',s.ry??'',s.emotion??'',s.intensity??'',s.event??''].join(','));download('newlanguage-session.csv',[h,...rows].join('
+'),'text/csv');};
 $('look').onclick=()=>{state.look=(state.look+1)%4;$('look').textContent='LOOK: '+looks[state.look];};
 window.addEventListener('resize',resize);
 window.addEventListener('gamepadconnected',e=>{state.padIndex=e.gamepad.index;$('status').textContent='GAMEPAD / '+e.gamepad.id.slice(0,34);});
