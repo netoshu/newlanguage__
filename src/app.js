@@ -131,7 +131,8 @@ function draw(ms){
   const palette=state.emotion==='ANNOYANCE'?['#ff3f68','#6d2cff','#39f0dc']:state.emotion==='EXCITEMENT'?['#ffb4ef','#ff70cf','#7b8cff']:state.emotion==='TAUNTING'?['#f2a0ff','#7e74ff','#5adbe8']:['#68e4ff','#9c6bff','#ff79d1'];
   ctx.save();ctx.translate(cx,cy);ctx.globalCompositeOperation='lighter';
   for(let ring=0;ring<7;ring++){
-    const jitter=state.emotion==='ANNOYANCE'?(Math.random()-.5)*d*.012:0;\n    const rr=radius+ring*d*.025+Math.sin(phase+ring*.8)*d*(state.emotion==='EXCITEMENT'?.018:.008)+jitter;
+    const jitter=state.emotion==='ANNOYANCE'?(Math.random()-.5)*d*.012:0;
+    const rr=radius+ring*d*.025+Math.sin(phase+ring*.8)*d*(state.emotion==='EXCITEMENT'?.018:.008)+jitter;
     ctx.beginPath();
     const steps=240;
     for(let i=0;i<=steps;i++){
