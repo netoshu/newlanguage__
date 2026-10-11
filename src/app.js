@@ -98,7 +98,7 @@ function poll(){
   const sweeps=state.leftSweep.length;
   const cooldown=t-state.lastEmotionTrigger>.65;
   // Priority: combined dance, then discrete right-stick gestures, then left-stick patterns.
-  if(leftMag>.35&&rightMag>.35&&ld<-.045&&rd>.045&&cooldown){
+  if(leftMag>.35&&rightMag>.35&&ld>.045&&rd<-.045&&cooldown){
     emotion('DANCING',t,{haptic:'dance',particles:5,duration:1.2});
   }else if(Math.abs(rx)>.42&&Math.abs(state.prev.rx)<.3&&cooldown){
     emotion('DISAGREEMENT',t,{haptic:'no',particles:2,duration:1.3});
@@ -108,7 +108,7 @@ function poll(){
     emotion('ANNOYANCE',t,{haptic:'buzz',particles:3,duration:1.4});
   }else if(sweeps>=2&&sweeps<5&&horizontalMove/dt<2.4&&cooldown){
     emotion('TAUNTING',t,{haptic:'swell',particles:2,duration:1.6});
-  }else if(Math.abs(ld)>.08&&cooldown){
+  }else if(ld<-.08&&cooldown){
     emotion('EXCITEMENT',t,{haptic:'swell',particles:6,duration:1.5});
   }
   // Right stick up is a continuous intensity modifier only after an effect is active.
