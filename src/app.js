@@ -121,7 +121,8 @@ function poll(){
   else if(state.emotion==='IDLE')state.intensity*=.985;
   events(pad,t);
   state.prev={ry,lx,ly,rx,u:state.turns};state.lastT=t;
-  state.effects=state.effects.filter(f=>t-f.born<f.life);\n  if(t>state.until&&state.emotion!=='IDLE')state.emotion='IDLE';
+  state.effects=state.effects.filter(f=>t-f.born<f.life);
+  if(t>state.until&&state.emotion!=='IDLE')state.emotion='IDLE';
   if(state.recording)state.samples.push({t:(now-state.start)/1000,lx,ly,rx,ry,emotion:state.emotion,intensity:state.intensity,look:looks[state.look],texture:state.texture,dimension:state.dimension});
   $('leftData').textContent=lx.toFixed(2)+' / '+ly.toFixed(2);$('rightData').textContent=rx.toFixed(2)+' / '+ry.toFixed(2);
 }
@@ -195,7 +196,17 @@ function draw(ms){
       else ctx.fillRect(x-size/2,y-size/2,size,size);
     }
   }
-  // Render recent gestures as translucent overlapping layers with a slow fade.\n  for(const layer of state.effects){\n    const age=t-layer.born, fade=Math.max(0,1-age/layer.life), rr=d*(.08+age*.12), col=(palettes[layer.emotion]||palettes.IDLE)[0];\n    ctx.save();ctx.globalAlpha=fade*.32;ctx.strokeStyle=col;ctx.lineWidth=1.2+fade;\n    if(layer.emotion==='WATER'){for(let j=0;j<5;j++){ctx.beginPath();ctx.ellipse(cx+Math.sin(j*2+age*1.5)*rr*.4,cy+Math.cos(j+age)*rr*.25,rr*.09,rr*.16,age+j,0,Math.PI*2);ctx.stroke();}}\n    else if(layer.emotion==='RIPPLES'||layer.emotion==='APPROVAL'){for(let j=0;j<3;j++){ctx.beginPath();ctx.arc(cx,cy,rr*(.35+j*.28),0,Math.PI*2);ctx.stroke();}}\n    else if(layer.emotion==='DASH'){for(let j=0;j<8;j++){ctx.beginPath();ctx.moveTo(cx-rr*.3,cy+(j-4)*rr*.08);ctx.lineTo(cx+rr*(.5+j*.04),cy+(j-4)*rr*.1);ctx.stroke();}}\n    else {ctx.beginPath();ctx.ellipse(cx,cy,rr,rr*(layer.emotion==='TAUNTING'?.72:1),age*.25,0,Math.PI*2);ctx.stroke();}\n    ctx.restore();\n  }\n  if(state.pointingUntil&&t<state.pointingUntil){ctx.globalAlpha=.8;ctx.strokeStyle='#b4f5ff';ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(0,0);ctx.lineTo((state.pointX||0)*d*.45,-(state.pointY||0)*d*.45);ctx.stroke();}
+  // Render recent gestures as translucent overlapping layers with a slow fade.
+  for(const layer of state.effects){
+    const age=t-layer.born, fade=Math.max(0,1-age/layer.life), rr=d*(.08+age*.12), col=(palettes[layer.emotion]||palettes.IDLE)[0];
+    ctx.save();ctx.globalAlpha=fade*.32;ctx.strokeStyle=col;ctx.lineWidth=1.2+fade;
+    if(layer.emotion==='WATER'){for(let j=0;j<5;j++){ctx.beginPath();ctx.ellipse(cx+Math.sin(j*2+age*1.5)*rr*.4,cy+Math.cos(j+age)*rr*.25,rr*.09,rr*.16,age+j,0,Math.PI*2);ctx.stroke();}}
+    else if(layer.emotion==='RIPPLES'||layer.emotion==='APPROVAL'){for(let j=0;j<3;j++){ctx.beginPath();ctx.arc(cx,cy,rr*(.35+j*.28),0,Math.PI*2);ctx.stroke();}}
+    else if(layer.emotion==='DASH'){for(let j=0;j<8;j++){ctx.beginPath();ctx.moveTo(cx-rr*.3,cy+(j-4)*rr*.08);ctx.lineTo(cx+rr*(.5+j*.04),cy+(j-4)*rr*.1);ctx.stroke();}}
+    else {ctx.beginPath();ctx.ellipse(cx,cy,rr,rr*(layer.emotion==='TAUNTING'?.72:1),age*.25,0,Math.PI*2);ctx.stroke();}
+    ctx.restore();
+  }
+  if(state.pointingUntil&&t<state.pointingUntil){ctx.globalAlpha=.8;ctx.strokeStyle='#b4f5ff';ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(0,0);ctx.lineTo((state.pointX||0)*d*.45,-(state.pointY||0)*d*.45);ctx.stroke();}
   state.particles=state.particles.filter(p=>p.life>0);
   for(const p of state.particles){
     const r=p.r+(1-p.life)*p.v;ctx.globalAlpha=p.life;
@@ -213,7 +224,9 @@ $('record').onclick=()=>{state.recording=!state.recording;if(state.recording){st
 $('export').onclick=()=>download('newlanguage-session.json',JSON.stringify({version:2,frameRate:60,createdAt:new Date().toISOString(),samples:state.samples},null,2),'application/json');
 $('exportCsv').onclick=()=>{const h='t,lx,ly,rx,ry,emotion,intensity,event';const rows=state.samples.map(s=>[s.t,s.lx??'',s.ly??'',s.rx??'',s.ry??'',s.emotion??'',s.intensity??'',s.event??''].join(','));download('newlanguage-session.csv',[h,...rows].join(String.fromCharCode(10)),'text/csv');};
 $('look').onclick=()=>{state.look=(state.look+1)%2;$('look').textContent='LOOK: '+looks[state.look];};
-window.addEventListener('resize',resize);\nwindow.addEventListener('keydown',e=>{const k=e.key.toLowerCase();if(['arrowup','arrowdown','arrowleft','arrowright',' '].includes(k))e.preventDefault();state.keys.add(k);const m=()=>{state.keyAxes[0]=(state.keys.has('d')?1:0)-(state.keys.has('a')?1:0);state.keyAxes[1]=(state.keys.has('s')?1:0)-(state.keys.has('w')?1:0);state.keyAxes[2]=(state.keys.has('arrowright')?1:0)-(state.keys.has('arrowleft')?1:0);state.keyAxes[3]=(state.keys.has('arrowdown')?1:0)-(state.keys.has('arrowup')?1:0);};m();if(k==='escape')state.keys.clear();});\nwindow.addEventListener('keyup',e=>{state.keys.delete(e.key.toLowerCase());state.keyAxes[0]=(state.keys.has('d')?1:0)-(state.keys.has('a')?1:0);state.keyAxes[1]=(state.keys.has('s')?1:0)-(state.keys.has('w')?1:0);state.keyAxes[2]=(state.keys.has('arrowright')?1:0)-(state.keys.has('arrowleft')?1:0);state.keyAxes[3]=(state.keys.has('arrowdown')?1:0)-(state.keys.has('arrowup')?1:0);});
+window.addEventListener('resize',resize);
+window.addEventListener('keydown',e=>{const k=e.key.toLowerCase();if(['arrowup','arrowdown','arrowleft','arrowright',' '].includes(k))e.preventDefault();state.keys.add(k);const m=()=>{state.keyAxes[0]=(state.keys.has('d')?1:0)-(state.keys.has('a')?1:0);state.keyAxes[1]=(state.keys.has('s')?1:0)-(state.keys.has('w')?1:0);state.keyAxes[2]=(state.keys.has('arrowright')?1:0)-(state.keys.has('arrowleft')?1:0);state.keyAxes[3]=(state.keys.has('arrowdown')?1:0)-(state.keys.has('arrowup')?1:0);};m();if(k==='escape')state.keys.clear();});
+window.addEventListener('keyup',e=>{state.keys.delete(e.key.toLowerCase());state.keyAxes[0]=(state.keys.has('d')?1:0)-(state.keys.has('a')?1:0);state.keyAxes[1]=(state.keys.has('s')?1:0)-(state.keys.has('w')?1:0);state.keyAxes[2]=(state.keys.has('arrowright')?1:0)-(state.keys.has('arrowleft')?1:0);state.keyAxes[3]=(state.keys.has('arrowdown')?1:0)-(state.keys.has('arrowup')?1:0);});
 window.addEventListener('gamepadconnected',e=>{state.padIndex=e.gamepad.index;$('status').textContent='GAMEPAD / '+e.gamepad.id.slice(0,34);});
 window.addEventListener('gamepaddisconnected',e=>{if(state.padIndex===e.gamepad.index)state.padIndex=null;});
 window.addEventListener('pointerdown',()=>getPads(),{passive:true});window.addEventListener('keydown',()=>getPads(),{passive:true});
