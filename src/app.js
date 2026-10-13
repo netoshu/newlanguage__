@@ -123,7 +123,7 @@ function poll(){
   const cooldown=t-state.lastEmotionTrigger>.65;
   // Left-stick gestures create their own graphics. Right stick is a modifier
   // while an emotion/action is active, otherwise it creates separate graphics.
-  const active=state.emotion!=='IDLE'||state.effects.some(f=>t-f.born<f.life);
+  const active=state.emotion!=='IDLE'&&t<state.until;
   if(leftMag>.35&&rightMag>.35&&ld>.045&&rd<-.045&&cooldown){
     emotion('CELEBRATION',t,{haptic:'dance',particles:8,duration:2.4});
   }else if(!active&&Math.abs(rx)>.42&&Math.abs(state.prev.rx)<.3&&cooldown){
