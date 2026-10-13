@@ -10,9 +10,9 @@ const state = {
   recording:false, start:0, emotion:'IDLE', until:0, intensity:0, look:0,
   samples:[], lastAngle:null, turns:0, lastT:0, crossings:[], leftSweep:[], rightSweep:[],
   prev:{ry:0,lx:0,ly:0,rx:0,u:0}, buttons:[], padIndex:null, particles:[], trail:false, dimension:2, texture:0.5,
-  lastTrigger:{}, lastHaptic:0, leftAngle:null, rightAngle:null, lastLeftDelta:0, lastRightDelta:0, lastEmotionTrigger:0
+  lastTrigger:{}, lastHaptic:0, leftAngle:null, rightAngle:null, lastLeftDelta:0, lastRightDelta:0, lastEmotionTrigger:0, effects:[], keys:new Set(), keyAxes:[0,0,0,0]
 };
-const looks = ['BITMAP','HALFTONE','TEXTILE','EMBROIDERY'];
+const looks = ['GRADIENT','EMBROIDERY'];
 const names = ['A','B','X','Y','LB','RB','LT','RT','BACK','START','LS','RS','UP','DOWN','LEFT','RIGHT'];
 const dead = v => Math.abs(v)<.08 ? 0 : v;
 const ang = (x,y) => Math.atan2(-y,x);
@@ -49,9 +49,12 @@ function vibrate(kind='tick', amount=0.5){
   }catch(_){}
 }
 function emotion(e,t,opts={}){
-  if(state.emotion===e && t-state.lastEmotionTrigger<0.55)return;
+  if(state.emotion===e && t-state.lastEmotionTrigger<0.28)return;
   state.emotion=e;state.until=t+(opts.duration||2.2);state.lastEmotionTrigger=t;
   state.intensity=Math.max(state.intensity,opts.intensity||.38);
+  // Each trigger adds a fading layer; new gestures do not erase previous ones.
+  state.effects.push({emotion:e,born:t,life:opts.duration||2.8,strength:Math.max(state.intensity,opts.intensity||.38)});
+  if(state.effects.length>12)state.effects.shift();
   const n=opts.particles||8;
   for(let i=0;i<n;i++)state.particles.push({a:Math.random()*Math.PI*2,r:24+Math.random()*75,v:25+Math.random()*110,life:1,kind:opts.kind||'spark'});
   if(opts.haptic)vibrate(opts.haptic,state.intensity);
@@ -79,9 +82,11 @@ function events(pad,t){
   }});state.buttons=b;
 }
 function poll(){
-  const pads=getPads(),pad=pads.find(p=>p.index===state.padIndex)||pads[0],now=performance.now(),t=now/1000;
-  if(!pad){state.padIndex=null;state.buttons=[];$('status').textContent=navigator.getGamepads?'GAMEPAD / PRESS ANY BUTTON':'GAMEPAD / UNSUPPORTED';$('leftData').textContent='0.00 / 0.00';$('rightData').textContent='0.00 / 0.00';return;}
-  state.padIndex=pad.index;$('status').textContent='GAMEPAD / '+pad.id.slice(0,34);
+  const pads=getPads(),realPad=pads.find(p=>p.index===state.padIndex)||pads[0],now=performance.now(),t=now/1000;
+  const virtual=()=>({index:-1,id:'KEYBOARD',axes:state.keyAxes,buttons:Array.from({length:16},(_,i)=>({pressed:state.keys.has(({0:' ',1:'b',2:'x',3:'y',12:'1',13:'2',14:'3',15:'4',8:'v',9:'m',7:'t'}[i]||'\0'))}))});
+  const pad=realPad||virtual();
+  state.padIndex=realPad?realPad.index:-1;
+  $('status').textContent=realPad?'GAMEPAD / '+realPad.id.slice(0,30):'KEYBOARD / ACTIVE';
   const lx=dead(pad.axes[0]||0),ly=dead(pad.axes[1]||0),rx=dead(pad.axes[2]||0),ry=dead(pad.axes[3]||0);
   const leftMag=Math.hypot(lx,ly),rightMag=Math.hypot(rx,ry);
   const la=Math.atan2(-ly,lx),ra=Math.atan2(-ry,rx);
@@ -116,7 +121,7 @@ function poll(){
   else if(state.emotion==='IDLE')state.intensity*=.985;
   events(pad,t);
   state.prev={ry,lx,ly,rx,u:state.turns};state.lastT=t;
-  if(t>state.until&&state.emotion!=='IDLE'&&!['PARTICLES','WATER','RIPPLES','DASH'].includes(state.emotion))state.emotion='IDLE';
+  state.effects=state.effects.filter(f=>t-f.born<f.life);\n  if(t>state.until&&state.emotion!=='IDLE')state.emotion='IDLE';
   if(state.recording)state.samples.push({t:(now-state.start)/1000,lx,ly,rx,ry,emotion:state.emotion,intensity:state.intensity,look:looks[state.look],texture:state.texture,dimension:state.dimension});
   $('leftData').textContent=lx.toFixed(2)+' / '+ly.toFixed(2);$('rightData').textContent=rx.toFixed(2)+' / '+ry.toFixed(2);
 }
@@ -168,7 +173,7 @@ function draw(ms){
       const steps=220;
       for(let i=0;i<=steps;i++){
         const a=i/steps*Math.PI*2;
-        const wave=Math.sin(a*(state.look===3?22:7)+phase+Math.sin(rr*.03-phase)*2)*d*(.004+energy*.014);
+        const wave=Math.sin(a*(state.look===1?22:7)+phase+Math.sin(rr*.03-phase)*2)*d*(.004+energy*.014);
         const r=rr+wave;
         const x=Math.cos(a)*r,y=Math.sin(a)*r;
         if(i===0)ctx.moveTo(x,y);else ctx.lineTo(x,y);
@@ -176,21 +181,21 @@ function draw(ms){
       ctx.closePath();ctx.strokeStyle=palette[ring%palette.length];ctx.globalAlpha=e==='ANNOYANCE'?.7:.34/(ring*.18+1);ctx.lineWidth=e==='ANNOYANCE'?1.6:1;ctx.shadowBlur=e==='EXCITEMENT'?28:12;ctx.shadowColor=palette[ring%palette.length];ctx.stroke();
     }
     ctx.shadowBlur=0;
-    const count=state.look===0?90:state.look===1?150:state.look===2?70:110;
+    const count=state.look===0?125:95;
     for(let i=0;i<count;i++){
       const a=i*2.39996+phase*(e==='DANCING'?2.4:e==='TAUNTING'?.45:1)*(i%2?1:-.7);
       const r=(.12+(i%37)/37*.36)*d;
       const jitter=Math.sin(i*13.7+phase*1.8)*d*(.002+energy*.01);
       const x=Math.cos(a)*(r+jitter),y=Math.sin(a)*(r+jitter);
-      const size=(state.look===1?1.8:state.look===3?2.2:1.1)*(0.5+state.texture);
+      const size=(state.look===1?2.2:1.1)*(0.5+state.texture);
       ctx.globalAlpha=.15+.45*(.5+.5*Math.sin(phase*1.7+i));
       ctx.fillStyle=palette[i%palette.length];
-      if((e==='ANNOYANCE'||e==='TAUNTING')&&state.texture>.5){ctx.beginPath();ctx.moveTo(x,y-size*2);ctx.lineTo(x+size*1.5,y+size);ctx.lineTo(x-size*1.5,y+size);ctx.closePath();ctx.fill();}
+      if(state.look===1||(e==='ANNOYANCE'||e==='TAUNTING')&&state.texture>.5){ctx.beginPath();ctx.moveTo(x,y-size*2);ctx.lineTo(x+size*1.5,y+size);ctx.lineTo(x-size*1.5,y+size);ctx.closePath();ctx.fill();}
       else if(state.look===2){ctx.strokeStyle=ctx.fillStyle;ctx.lineWidth=.8;ctx.beginPath();ctx.moveTo(x-4,y-3);ctx.lineTo(x+4,y+3);ctx.stroke();}
       else ctx.fillRect(x-size/2,y-size/2,size,size);
     }
   }
-  if(state.pointingUntil&&t<state.pointingUntil){ctx.globalAlpha=.8;ctx.strokeStyle='#b4f5ff';ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(0,0);ctx.lineTo((state.pointX||0)*d*.45,-(state.pointY||0)*d*.45);ctx.stroke();}
+  // Render recent gestures as translucent overlapping layers with a slow fade.\n  for(const layer of state.effects){\n    const age=t-layer.born, fade=Math.max(0,1-age/layer.life), rr=d*(.08+age*.12), col=(palettes[layer.emotion]||palettes.IDLE)[0];\n    ctx.save();ctx.globalAlpha=fade*.32;ctx.strokeStyle=col;ctx.lineWidth=1.2+fade;\n    if(layer.emotion==='WATER'){for(let j=0;j<5;j++){ctx.beginPath();ctx.ellipse(cx+Math.sin(j*2+age*1.5)*rr*.4,cy+Math.cos(j+age)*rr*.25,rr*.09,rr*.16,age+j,0,Math.PI*2);ctx.stroke();}}\n    else if(layer.emotion==='RIPPLES'||layer.emotion==='APPROVAL'){for(let j=0;j<3;j++){ctx.beginPath();ctx.arc(cx,cy,rr*(.35+j*.28),0,Math.PI*2);ctx.stroke();}}\n    else if(layer.emotion==='DASH'){for(let j=0;j<8;j++){ctx.beginPath();ctx.moveTo(cx-rr*.3,cy+(j-4)*rr*.08);ctx.lineTo(cx+rr*(.5+j*.04),cy+(j-4)*rr*.1);ctx.stroke();}}\n    else {ctx.beginPath();ctx.ellipse(cx,cy,rr,rr*(layer.emotion==='TAUNTING'?.72:1),age*.25,0,Math.PI*2);ctx.stroke();}\n    ctx.restore();\n  }\n  if(state.pointingUntil&&t<state.pointingUntil){ctx.globalAlpha=.8;ctx.strokeStyle='#b4f5ff';ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(0,0);ctx.lineTo((state.pointX||0)*d*.45,-(state.pointY||0)*d*.45);ctx.stroke();}
   state.particles=state.particles.filter(p=>p.life>0);
   for(const p of state.particles){
     const r=p.r+(1-p.life)*p.v;ctx.globalAlpha=p.life;
@@ -207,8 +212,8 @@ function format(s){const m=Math.floor(s/60),q=Math.floor(s%60),ms=Math.floor((s%
 $('record').onclick=()=>{state.recording=!state.recording;if(state.recording){state.samples=[];state.start=performance.now();$('record').classList.add('active');$('record').textContent='■ STOP';}else{$('record').classList.remove('active');$('record').textContent='● RECORD';}};
 $('export').onclick=()=>download('newlanguage-session.json',JSON.stringify({version:2,frameRate:60,createdAt:new Date().toISOString(),samples:state.samples},null,2),'application/json');
 $('exportCsv').onclick=()=>{const h='t,lx,ly,rx,ry,emotion,intensity,event';const rows=state.samples.map(s=>[s.t,s.lx??'',s.ly??'',s.rx??'',s.ry??'',s.emotion??'',s.intensity??'',s.event??''].join(','));download('newlanguage-session.csv',[h,...rows].join(String.fromCharCode(10)),'text/csv');};
-$('look').onclick=()=>{state.look=(state.look+1)%4;$('look').textContent='LOOK: '+looks[state.look];};
-window.addEventListener('resize',resize);
+$('look').onclick=()=>{state.look=(state.look+1)%2;$('look').textContent='LOOK: '+looks[state.look];};
+window.addEventListener('resize',resize);\nwindow.addEventListener('keydown',e=>{const k=e.key.toLowerCase();if(['arrowup','arrowdown','arrowleft','arrowright',' '].includes(k))e.preventDefault();state.keys.add(k);const m=()=>{state.keyAxes[0]=(state.keys.has('d')?1:0)-(state.keys.has('a')?1:0);state.keyAxes[1]=(state.keys.has('s')?1:0)-(state.keys.has('w')?1:0);state.keyAxes[2]=(state.keys.has('arrowright')?1:0)-(state.keys.has('arrowleft')?1:0);state.keyAxes[3]=(state.keys.has('arrowdown')?1:0)-(state.keys.has('arrowup')?1:0);};m();if(k==='escape')state.keys.clear();});\nwindow.addEventListener('keyup',e=>{state.keys.delete(e.key.toLowerCase());state.keyAxes[0]=(state.keys.has('d')?1:0)-(state.keys.has('a')?1:0);state.keyAxes[1]=(state.keys.has('s')?1:0)-(state.keys.has('w')?1:0);state.keyAxes[2]=(state.keys.has('arrowright')?1:0)-(state.keys.has('arrowleft')?1:0);state.keyAxes[3]=(state.keys.has('arrowdown')?1:0)-(state.keys.has('arrowup')?1:0);});
 window.addEventListener('gamepadconnected',e=>{state.padIndex=e.gamepad.index;$('status').textContent='GAMEPAD / '+e.gamepad.id.slice(0,34);});
 window.addEventListener('gamepaddisconnected',e=>{if(state.padIndex===e.gamepad.index)state.padIndex=null;});
 window.addEventListener('pointerdown',()=>getPads(),{passive:true});window.addEventListener('keydown',()=>getPads(),{passive:true});
