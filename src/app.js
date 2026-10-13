@@ -72,7 +72,7 @@ function events(pad,t){
     if(i===12){state.look=0;vibrate('tick');}
     if(i===15){state.look=1;vibrate('tick');}
     if(i===13){state.trail=!state.trail;vibrate('tick');}
-    if(i===14){state.look=3;vibrate('tick');}
+    if(i===14){state.look=0;vibrate('tick');}
     // View/back toggles textural detail; Menu/start toggles dimensional treatment.
     if(i===8){state.texture=state.texture>.5?0.15:0.9;vibrate('tick');}
     if(i===9){state.dimension=state.dimension===2?3:2;vibrate('tick');}
