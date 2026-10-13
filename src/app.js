@@ -128,115 +128,16 @@ function poll(){
 }
 function draw(ms){
   if(!ctx)return;
-  const w=window.innerWidth,h=window.innerHeight,d=Math.min(w,h),cx=w*.5,cy=h*.48,t=ms/1000;
-  if(!state.trail){ctx.clearRect(0,0,w,h);ctx.fillStyle='#030305';ctx.fillRect(0,0,w,h);}else{ctx.fillStyle='rgba(3,3,5,.13)';ctx.fillRect(0,0,w,h);}
-  const e=state.emotion, energy=state.intensity, phase=t*1.1, radius=d*(.16+.08*energy);
-  const palettes={
-    IDLE:['#68e4ff','#9c6bff'],
-    EXCITEMENT:['#ffb4ef','#ff70cf','#7b8cff'],
-    TAUNTING:['#f2a0ff','#7e74ff','#5adbe8'],
-    ANNOYANCE:['#ff3f68','#6d2cff','#39f0dc'],
-    DISAGREEMENT:['#ff6b78','#ffb15c'],
-    APPROVAL:['#71f6d2','#78b8ff'],
-    DANCING:['#ff70cf','#75f5ff','#e5ff80'],
-    PARTICLES:['#f7f4ff','#8ceaff'],
-    WATER:['#61dfff','#d8fbff'],
-    RIPPLES:['#b6a0ff','#76e9ff'],
-    DASH:['#ffffff','#ff6edc']
-  };
-  const palette=palettes[e]||palettes.IDLE;
-  const grad=ctx.createRadialGradient(cx,cy,2,cx,cy,d*(.22+.22*energy));
-  grad.addColorStop(0,palette[0]+'22');grad.addColorStop(.55,palette[1]+'10');grad.addColorStop(1,'rgba(3,3,5,0)');
-  ctx.fillStyle=grad;ctx.fillRect(0,0,w,h);
-  ctx.save();ctx.translate(cx,cy);ctx.globalCompositeOperation='lighter';
-  if(e==='DISAGREEMENT'){
-    // Two opposing strokes, with a small pause between them.
-    for(let side=-1;side<=1;side+=2){ctx.beginPath();ctx.moveTo(side*d*.035,-d*.10);ctx.lineTo(-side*d*.035,-d*.03);ctx.lineTo(side*d*.035,d*.04);ctx.strokeStyle=palette[0];ctx.lineWidth=3;ctx.globalAlpha=.75;ctx.stroke();}
-  }else if(e==='APPROVAL'){
-    // Two clear nod arcs.
-    for(let i=0;i<2;i++){const rr=d*(.13+i*.065)+Math.sin(t*5+i*Math.PI)*d*.012;ctx.beginPath();ctx.arc(0,0,rr,Math.PI*1.12,Math.PI*1.88);ctx.strokeStyle=palette[i%palette.length];ctx.lineWidth=2.5;ctx.globalAlpha=.8;ctx.stroke();}
-  }else if(e==='DASH'){
-    // A sharp forward burst of speed lines.
-    for(let i=0;i<34;i++){const y=(i-17)*d*.012;ctx.beginPath();ctx.moveTo(-d*.04,y);ctx.lineTo(d*(.08+(i%7)*.018),y*(.4+(i%4)*.1));ctx.strokeStyle=palette[i%palette.length];ctx.globalAlpha=.15+(i%5)*.12;ctx.lineWidth=1+(i%3);ctx.stroke();}
-  }else if(e==='WATER'){
-    // Droplets fall outward from the core.
-    for(let i=0;i<22;i++){const a=i*2.39996+t*(.2+(i%3)*.1),r=d*(.07+((t*.18+i*.137)%1)*.24);ctx.beginPath();ctx.ellipse(Math.cos(a)*r,Math.sin(a)*r,2.3,4.8,a,0,Math.PI*2);ctx.fillStyle=palette[i%palette.length];ctx.globalAlpha=.75;ctx.fill();}
-  }else if(e==='RIPPLES'){
-    // Expanding, fading wave circles.
-    for(let i=0;i<6;i++){const rr=(.04+((t*.22+i/6)%1)*.28)*d;ctx.beginPath();ctx.arc(0,0,rr,0,Math.PI*2);ctx.strokeStyle=palette[i%palette.length];ctx.lineWidth=1.5;ctx.globalAlpha=1-((t*.22+i/6)%1);ctx.stroke();}
-  }else{
-    const rings=e==='ANNOYANCE'?10:e==='TAUNTING'?4:e==='EXCITEMENT'?9:e==='DANCING'?8:6;
-    for(let ring=0;ring<rings;ring++){
-      const jitter=e==='ANNOYANCE'?(Math.random()-.5)*d*.018:0;
-      const pulse=e==='EXCITEMENT'?Math.sin(t*4+ring*.5)*d*.014:e==='TAUNTING'?Math.sin(t*1.1+ring)*d*.004:Math.sin(phase+ring*.8)*d*.008;
-      const rr=radius+ring*d*(e==='TAUNTING'?.035:.024)+pulse+jitter;
-      ctx.beginPath();
-      const steps=220;
-      for(let i=0;i<=steps;i++){
-        const a=i/steps*Math.PI*2;
-        const wave=Math.sin(a*(state.look===1?22:7)+phase+Math.sin(rr*.03-phase)*2)*d*(.004+energy*.014);
-        const r=rr+wave;
-        const x=Math.cos(a)*r,y=Math.sin(a)*r;
-        if(i===0)ctx.moveTo(x,y);else ctx.lineTo(x,y);
-      }
-      ctx.closePath();ctx.strokeStyle=palette[ring%palette.length];ctx.globalAlpha=e==='ANNOYANCE'?.7:.34/(ring*.18+1);ctx.lineWidth=e==='ANNOYANCE'?1.6:1;ctx.shadowBlur=e==='EXCITEMENT'?28:12;ctx.shadowColor=palette[ring%palette.length];ctx.stroke();
-    }
-    ctx.shadowBlur=0;
-    const count=state.look===0?125:95;
-    for(let i=0;i<count;i++){
-      const a=i*2.39996+phase*(e==='DANCING'?2.4:e==='TAUNTING'?.45:1)*(i%2?1:-.7);
-      const r=(.12+(i%37)/37*.36)*d;
-      const jitter=Math.sin(i*13.7+phase*1.8)*d*(.002+energy*.01);
-      const x=Math.cos(a)*(r+jitter),y=Math.sin(a)*(r+jitter);
-      const size=(state.look===1?2.2:1.1)*(0.5+state.texture);
-      ctx.globalAlpha=.15+.45*(.5+.5*Math.sin(phase*1.7+i));
-      ctx.fillStyle=palette[i%palette.length];
-      if(state.look===1||(e==='ANNOYANCE'||e==='TAUNTING')&&state.texture>.5){ctx.beginPath();ctx.moveTo(x,y-size*2);ctx.lineTo(x+size*1.5,y+size);ctx.lineTo(x-size*1.5,y+size);ctx.closePath();ctx.fill();}
-      else if(state.look===2){ctx.strokeStyle=ctx.fillStyle;ctx.lineWidth=.8;ctx.beginPath();ctx.moveTo(x-4,y-3);ctx.lineTo(x+4,y+3);ctx.stroke();}
-      else ctx.fillRect(x-size/2,y-size/2,size,size);
-    }
-  }
-  // Every gesture remains as its own fading layer. Coordinates are local to the
-  // translated canvas origin, so overlapping forms stay centred and visible.
-  for(const layer of state.effects){
-    const age=Math.max(0,t-layer.born), fade=Math.max(0,1-age/layer.life), p=Math.min(1,age/layer.life);
-    const col=(palettes[layer.emotion]||palettes.IDLE)[0], col2=(palettes[layer.emotion]||palettes.IDLE)[1]||col;
-    const rr=d*(.055+p*.31)*(.65+layer.strength*.5);
-    ctx.save();ctx.globalAlpha=fade*.72;ctx.strokeStyle=col;ctx.fillStyle=col;ctx.lineWidth=.8+fade*1.7;ctx.shadowBlur=fade*15;ctx.shadowColor=col;
-    if(layer.emotion==='WATER'){
-      for(let j=0;j<9;j++){const a=j*2.399+age*(.4+j%3*.15),r=rr*(.25+(j%4)*.18);ctx.beginPath();ctx.ellipse(Math.cos(a)*r,Math.sin(a)*r,2+fade*2,5+fade*2,a+Math.PI/4,0,Math.PI*2);ctx.fill();}
-    }else if(layer.emotion==='RIPPLES'||layer.emotion==='APPROVAL'){
-      for(let j=0;j<4;j++){const r=rr*(.3+j*.25);ctx.globalAlpha=fade*.65*(1-j*.13);ctx.beginPath();if(layer.emotion==='APPROVAL')ctx.arc(0,Math.sin(age*3)*d*.025,r,Math.PI*1.08,Math.PI*1.92);else ctx.arc(0,0,r,0,Math.PI*2);ctx.stroke();}
-    }else if(layer.emotion==='DASH'){
-      for(let j=0;j<14;j++){const y=(j-7)*rr*.09;ctx.globalAlpha=fade*(.2+(j%4)*.15);ctx.beginPath();ctx.moveTo(-rr*.5,y);ctx.lineTo(rr*(.25+(j%5)*.12),y+Math.sin(age*3+j)*rr*.035);ctx.stroke();}
-    }else if(layer.emotion==='PARTICLES'){
-      for(let j=0;j<18;j++){const a=j*2.399+age*(1+j%3*.2),r=rr*(.2+((j*.17+p)%1)*.75);ctx.globalAlpha=fade;ctx.beginPath();ctx.arc(Math.cos(a)*r,Math.sin(a)*r,1.5+(j%3),0,Math.PI*2);ctx.fill();}
-    }else if(layer.emotion==='ANNOYANCE'){
-      ctx.beginPath();for(let j=0;j<=72;j++){const a=j/72*Math.PI*2,r=rr*(.8+(j%2)*.16)+Math.sin(j*2.1+age*18)*d*.006;if(!j)ctx.moveTo(Math.cos(a)*r,Math.sin(a)*r);else ctx.lineTo(Math.cos(a)*r,Math.sin(a)*r);}ctx.closePath();ctx.stroke();
-      for(let j=0;j<12;j++){const a=j*Math.PI/6,r=rr*(.9+Math.sin(age*8+j)*.05);ctx.beginPath();ctx.moveTo(Math.cos(a)*r,Math.sin(a)*r);ctx.lineTo(Math.cos(a)*(r+d*.025),Math.sin(a)*(r+d*.025));ctx.stroke();}
-    }else if(layer.emotion==='TAUNTING'){
-      for(let j=0;j<5;j++){ctx.beginPath();ctx.ellipse(Math.sin(age*1.5+j*.8)*rr*.16,0,rr*(.45+j*.12),rr*(.18+j*.035),Math.sin(age+j)*.16,0,Math.PI*2);ctx.stroke();}
-    }else if(layer.emotion==='DISAGREEMENT'){
-      for(let j=0;j<2;j++){const x=(j?1:-1)*Math.sin(age*2)*rr*.22;ctx.beginPath();ctx.moveTo(x-rr*.18,-rr*.5);ctx.lineTo(x+rr*.18,0);ctx.lineTo(x-rr*.18,rr*.5);ctx.stroke();}
-    }else{
-      // Gradient/emotion halo: a breathing elliptical contour with a second colour.
-      ctx.beginPath();ctx.ellipse(Math.sin(age*1.4)*rr*.12,Math.cos(age*1.2)*rr*.1,rr,rr*(layer.emotion==='EXCITEMENT'?.72:.9),age*.18,0,Math.PI*2);ctx.stroke();
-      ctx.strokeStyle=col2;ctx.globalAlpha=fade*.34;ctx.beginPath();ctx.ellipse(0,0,rr*.72,rr*.54,-age*.2,0,Math.PI*2);ctx.stroke();
-    }
-    ctx.restore();
-  }
-  if(state.pointingUntil&&t<state.pointingUntil){ctx.globalAlpha=.8;ctx.strokeStyle='#b4f5ff';ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(0,0);ctx.lineTo((state.pointX||0)*d*.45,-(state.pointY||0)*d*.45);ctx.stroke();}
-  state.particles=state.particles.filter(p=>p.life>0);
-  for(const p of state.particles){
-    const r=p.r+(1-p.life)*p.v;ctx.globalAlpha=p.life;
-    ctx.fillStyle=p.kind==='water'?'#8ceaff':p.kind==='ripple'?'#b6a0ff':p.kind==='dash'?'#ffffff':'#a9eaff';
-    if(p.kind==='water'){ctx.beginPath();ctx.ellipse(Math.cos(p.a)*r,Math.sin(p.a)*r,2,5,p.a,0,Math.PI*2);ctx.fill();}
-    else if(p.kind==='ripple'){ctx.beginPath();ctx.arc(Math.cos(p.a)*r,Math.sin(p.a)*r,3+(1-p.life)*8,0,Math.PI*2);ctx.stroke();}
-    else {ctx.beginPath();ctx.arc(Math.cos(p.a)*r,Math.sin(p.a)*r,2+p.life*2,0,Math.PI*2);ctx.fill();}
-    p.life-=.012;
-  }
-  ctx.restore();ctx.globalAlpha=1;
-  if(state.dimension===3){ctx.save();ctx.globalAlpha=.18;ctx.strokeStyle='#a8b8ff';for(let i=0;i<9;i++){ctx.beginPath();ctx.ellipse(cx,cy,d*(.12+i*.025),d*(.045+i*.012),t*.12+i*.08,0,Math.PI*2);ctx.stroke();}ctx.restore();}
+  // Visual reset: intentionally render no emotion graphics. Keep the canvas
+  // and all input/gesture state alive so a new visual system can be built cleanly.
+  const w=window.innerWidth,h=window.innerHeight;
+  ctx.setTransform(1,0,0,1,0,0);
+  ctx.globalAlpha=1;
+  ctx.globalCompositeOperation='source-over';
+  ctx.shadowBlur=0;
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  ctx.fillStyle='#030305';
+  ctx.fillRect(0,0,canvas.width,canvas.height);
 }
 function format(s){const m=Math.floor(s/60),q=Math.floor(s%60),ms=Math.floor((s%1)*1000);return String(m).padStart(2,'0')+':'+String(q).padStart(2,'0')+'.'+String(ms).padStart(3,'0');}
 $('record').onclick=()=>{state.recording=!state.recording;if(state.recording){state.samples=[];state.start=performance.now();$('record').classList.add('active');$('record').textContent='■ STOP';}else{$('record').classList.remove('active');$('record').textContent='● RECORD';}};
