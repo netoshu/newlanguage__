@@ -72,7 +72,7 @@ function events(pad,t){
     if(i===12){state.look=0;vibrate('tick');}
     if(i===15){state.look=1;vibrate('tick');}
     if(i===13){state.trail=!state.trail;vibrate('tick');}
-    if(i===14){state.look=0;vibrate('tick');}
+    if(i===14){state.look=1;vibrate('tick');}
     // View/back toggles textural detail; Menu/start toggles dimensional treatment.
     if(i===8){state.texture=state.texture>.5?0.15:0.9;vibrate('tick');}
     if(i===9){state.dimension=state.dimension===2?3:2;vibrate('tick');}
@@ -196,14 +196,33 @@ function draw(ms){
       else ctx.fillRect(x-size/2,y-size/2,size,size);
     }
   }
-  // Render recent gestures as translucent overlapping layers with a slow fade.
+  // Every gesture remains as its own fading layer. Coordinates are local to the
+  // translated canvas origin, so overlapping forms stay centred and visible.
   for(const layer of state.effects){
-    const age=t-layer.born, fade=Math.max(0,1-age/layer.life), rr=d*(.08+age*.12), col=(palettes[layer.emotion]||palettes.IDLE)[0];
-    ctx.save();ctx.globalAlpha=fade*.32;ctx.strokeStyle=col;ctx.lineWidth=1.2+fade;
-    if(layer.emotion==='WATER'){for(let j=0;j<5;j++){ctx.beginPath();ctx.ellipse(cx+Math.sin(j*2+age*1.5)*rr*.4,cy+Math.cos(j+age)*rr*.25,rr*.09,rr*.16,age+j,0,Math.PI*2);ctx.stroke();}}
-    else if(layer.emotion==='RIPPLES'||layer.emotion==='APPROVAL'){for(let j=0;j<3;j++){ctx.beginPath();ctx.arc(cx,cy,rr*(.35+j*.28),0,Math.PI*2);ctx.stroke();}}
-    else if(layer.emotion==='DASH'){for(let j=0;j<8;j++){ctx.beginPath();ctx.moveTo(cx-rr*.3,cy+(j-4)*rr*.08);ctx.lineTo(cx+rr*(.5+j*.04),cy+(j-4)*rr*.1);ctx.stroke();}}
-    else {ctx.beginPath();ctx.ellipse(cx,cy,rr,rr*(layer.emotion==='TAUNTING'?.72:1),age*.25,0,Math.PI*2);ctx.stroke();}
+    const age=Math.max(0,t-layer.born), fade=Math.max(0,1-age/layer.life), p=Math.min(1,age/layer.life);
+    const col=(palettes[layer.emotion]||palettes.IDLE)[0], col2=(palettes[layer.emotion]||palettes.IDLE)[1]||col;
+    const rr=d*(.055+p*.31)*(.65+layer.strength*.5);
+    ctx.save();ctx.globalAlpha=fade*.72;ctx.strokeStyle=col;ctx.fillStyle=col;ctx.lineWidth=.8+fade*1.7;ctx.shadowBlur=fade*15;ctx.shadowColor=col;
+    if(layer.emotion==='WATER'){
+      for(let j=0;j<9;j++){const a=j*2.399+age*(.4+j%3*.15),r=rr*(.25+(j%4)*.18);ctx.beginPath();ctx.ellipse(Math.cos(a)*r,Math.sin(a)*r,2+fade*2,5+fade*2,a+Math.PI/4,0,Math.PI*2);ctx.fill();}
+    }else if(layer.emotion==='RIPPLES'||layer.emotion==='APPROVAL'){
+      for(let j=0;j<4;j++){const r=rr*(.3+j*.25);ctx.globalAlpha=fade*.65*(1-j*.13);ctx.beginPath();if(layer.emotion==='APPROVAL')ctx.arc(0,Math.sin(age*3)*d*.025,r,Math.PI*1.08,Math.PI*1.92);else ctx.arc(0,0,r,0,Math.PI*2);ctx.stroke();}
+    }else if(layer.emotion==='DASH'){
+      for(let j=0;j<14;j++){const y=(j-7)*rr*.09;ctx.globalAlpha=fade*(.2+(j%4)*.15);ctx.beginPath();ctx.moveTo(-rr*.5,y);ctx.lineTo(rr*(.25+(j%5)*.12),y+Math.sin(age*3+j)*rr*.035);ctx.stroke();}
+    }else if(layer.emotion==='PARTICLES'){
+      for(let j=0;j<18;j++){const a=j*2.399+age*(1+j%3*.2),r=rr*(.2+((j*.17+p)%1)*.75);ctx.globalAlpha=fade;ctx.beginPath();ctx.arc(Math.cos(a)*r,Math.sin(a)*r,1.5+(j%3),0,Math.PI*2);ctx.fill();}
+    }else if(layer.emotion==='ANNOYANCE'){
+      ctx.beginPath();for(let j=0;j<=72;j++){const a=j/72*Math.PI*2,r=rr*(.8+(j%2)*.16)+Math.sin(j*2.1+age*18)*d*.006;if(!j)ctx.moveTo(Math.cos(a)*r,Math.sin(a)*r);else ctx.lineTo(Math.cos(a)*r,Math.sin(a)*r);}ctx.closePath();ctx.stroke();
+      for(let j=0;j<12;j++){const a=j*Math.PI/6,r=rr*(.9+Math.sin(age*8+j)*.05);ctx.beginPath();ctx.moveTo(Math.cos(a)*r,Math.sin(a)*r);ctx.lineTo(Math.cos(a)*(r+d*.025),Math.sin(a)*(r+d*.025));ctx.stroke();}
+    }else if(layer.emotion==='TAUNTING'){
+      for(let j=0;j<5;j++){ctx.beginPath();ctx.ellipse(Math.sin(age*1.5+j*.8)*rr*.16,0,rr*(.45+j*.12),rr*(.18+j*.035),Math.sin(age+j)*.16,0,Math.PI*2);ctx.stroke();}
+    }else if(layer.emotion==='DISAGREEMENT'){
+      for(let j=0;j<2;j++){const x=(j?1:-1)*Math.sin(age*2)*rr*.22;ctx.beginPath();ctx.moveTo(x-rr*.18,-rr*.5);ctx.lineTo(x+rr*.18,0);ctx.lineTo(x-rr*.18,rr*.5);ctx.stroke();}
+    }else{
+      // Gradient/emotion halo: a breathing elliptical contour with a second colour.
+      ctx.beginPath();ctx.ellipse(Math.sin(age*1.4)*rr*.12,Math.cos(age*1.2)*rr*.1,rr,rr*(layer.emotion==='EXCITEMENT'?.72:.9),age*.18,0,Math.PI*2);ctx.stroke();
+      ctx.strokeStyle=col2;ctx.globalAlpha=fade*.34;ctx.beginPath();ctx.ellipse(0,0,rr*.72,rr*.54,-age*.2,0,Math.PI*2);ctx.stroke();
+    }
     ctx.restore();
   }
   if(state.pointingUntil&&t<state.pointingUntil){ctx.globalAlpha=.8;ctx.strokeStyle='#b4f5ff';ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(0,0);ctx.lineTo((state.pointX||0)*d*.45,-(state.pointY||0)*d*.45);ctx.stroke();}
