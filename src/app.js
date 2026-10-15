@@ -124,17 +124,20 @@ function poll(){
   // Left-stick gestures create their own graphics. Right stick is a modifier
   // while an emotion/action is active, otherwise it creates separate graphics.
   const active=state.emotion!=='IDLE'&&t<state.until;
-  if(leftMag>.35&&rightMag>.35&&ld>.045&&rd<-.045&&cooldown){
+  // One gesture owns the canvas until its release window ends. This prevents
+  // a single physical movement from repeatedly switching emotion families.
+  const canStart=!active&&cooldown;
+  if(leftMag>.35&&rightMag>.35&&ld>.045&&rd<-.045&&canStart){
     emotion('CELEBRATION',t,{haptic:'dance',particles:8,duration:2.4});
-  }else if(!active&&Math.abs(rx)>.42&&Math.abs(state.prev.rx)<.3&&cooldown){
+  }else if(Math.abs(rx)>.42&&Math.abs(state.prev.rx)<.3&&canStart){
     emotion('RIGHT_DISAGREEMENT',t,{haptic:'no',particles:4,duration:2.1});
-  }else if(!active&&Math.abs(ry)>.42&&Math.abs(state.prev.ry)<.3&&cooldown){
+  }else if(Math.abs(ry)>.42&&Math.abs(state.prev.ry)<.3&&canStart){
     emotion('RIGHT_APPROVAL',t,{haptic:'bump',particles:4,duration:2.1});
-  }else if(sweeps>=5&&horizontalMove/dt>2.4&&cooldown){
+  }else if(sweeps>=5&&horizontalMove/dt>2.4&&canStart){
     emotion('ANNOYANCE',t,{haptic:'buzz',particles:5,duration:2.4});
-  }else if(sweeps>=2&&sweeps<5&&horizontalMove/dt<2.4&&cooldown){
+  }else if(sweeps>=2&&sweeps<5&&horizontalMove/dt<2.4&&canStart){
     emotion('TAUNTING',t,{haptic:'swell',particles:3,duration:2.8});
-  }else if(ld<-.08&&cooldown){
+  }else if(ld<-.08&&canStart){
     emotion('EXCITEMENT',t,{haptic:'swell',particles:7,duration:2.8});
   }
   if(active&&rightMag>.12){
