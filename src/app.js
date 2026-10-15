@@ -10,7 +10,7 @@ const state = {
   recording:false, start:0, emotion:'IDLE', until:0, intensity:0, look:0,
   samples:[], lastAngle:null, turns:0, lastT:0, crossings:[], leftSweep:[], rightSweep:[],
   prev:{ry:0,lx:0,ly:0,rx:0,u:0}, buttons:[], padIndex:null, particles:[], trail:false, dimension:2, texture:0.5,
-  lastTrigger:{}, lastHaptic:0, leftAngle:null, rightAngle:null, lastLeftDelta:0, lastRightDelta:0, lastEmotionTrigger:0, effects:[], ripples:[], keys:new Set(), keyAxes:[0,0,0,0], lastA:0, aCount:0
+  lastTrigger:{}, lastHaptic:0, leftAngle:null, rightAngle:null, lastLeftDelta:0, lastRightDelta:0, lastEmotionTrigger:0, rotationSweep:[], effects:[], ripples:[], keys:new Set(), keyAxes:[0,0,0,0], lastA:0, aCount:0
 };
 const looks = ['GRADIENT','EMBROIDERY'];
 const names = ['A','B','X','Y','LB','RB','LT','RT','BACK','START','LS','RS','UP','DOWN','LEFT','RIGHT'];
@@ -110,7 +110,12 @@ function poll(){
   const leftMag=Math.hypot(lx,ly),rightMag=Math.hypot(rx,ry);
   const la=Math.atan2(-ly,lx),ra=Math.atan2(-ry,rx);
   let ld=0,rd=0;
-  if(leftMag>.22&&state.leftAngle!==null){ld=la-state.leftAngle;if(ld>Math.PI)ld-=Math.PI*2;if(ld<-Math.PI)ld+=Math.PI*2;state.turns+=ld;}
+  if(leftMag>.22&&state.leftAngle!==null){
+    ld=la-state.leftAngle;if(ld>Math.PI)ld-=Math.PI*2;if(ld<-Math.PI)ld+=Math.PI*2;
+    state.turns+=ld;
+    if(Math.abs(ld)<.75)state.rotationSweep.push({t,delta:ld});
+  }
+  state.rotationSweep=state.rotationSweep.filter(x=>t-x.t<1.05);
   if(rightMag>.22&&state.rightAngle!==null){rd=ra-state.rightAngle;if(rd>Math.PI)rd-=Math.PI*2;if(rd<-Math.PI)rd+=Math.PI*2;}
   if(leftMag>.22)state.leftAngle=la;else state.leftAngle=null;
   if(rightMag>.22)state.rightAngle=ra;else state.rightAngle=null;
@@ -137,7 +142,9 @@ function poll(){
     emotion('ANNOYANCE',t,{haptic:'buzz',particles:5,duration:2.4});
   }else if(sweeps>=2&&sweeps<5&&horizontalMove/dt<2.4&&canStart){
     emotion('TAUNTING',t,{haptic:'swell',particles:3,duration:2.8});
-  }else if(ld<-.08&&canStart){
+  }else if(state.rotationSweep.reduce((sum,x)=>sum+x.delta,0)<-Math.PI*1.35&&canStart){
+    // Require a real clockwise sweep, not a tiny accidental stick movement.
+    state.rotationSweep=[];
     emotion('EXCITEMENT',t,{haptic:'swell',particles:7,duration:2.8});
   }
   if(active&&rightMag>.12){
