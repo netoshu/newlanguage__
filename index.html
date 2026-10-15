@@ -142,27 +142,18 @@ function ePart(c,g,p,k,x,y,s,t,L,ax,ay,tex){const col=THREAD[g.pal[k%3]],vis=(a,
   if(p.kind==='bulb'&&vis(0,0)){c.fillRect(gx*C,gy*C,C*2,C*2)}else if(vis(0,0)){stitch(c,gx,gy,'o');c.fill()}
   if(hi){c.strokeStyle='#fff';c.beginPath();stitch(c,gx-1,gy,'+');c.stroke()}}
 }
-function render(S,live,showRet){const c=ctx,T=S.look==='embroidery'?Math.floor(S.tick/5)*5:S.tick,emb=S.look==='embroidery';
- c.setTransform(1,0,0,1,0,0);c.fillStyle=emb?'#0a0a0c':'#08060f';c.fillRect(0,0,cv.width,cv.height);c.setTransform(sc,0,0,sc,ox0,oy0);
- c.save();c.beginPath();c.rect(0,0,W,H);c.clip();
- if(!emb){const bg=c.createRadialGradient(W*.48,H*.48,20,W*.5,H*.52,H*.82);bg.addColorStop(0,'#19112d');bg.addColorStop(.42,'#0d0a1a');bg.addColorStop(1,'#05050a');c.fillStyle=bg;c.fillRect(0,0,W,H);
-  for(const gl of [{x:W*.18,y:H*.3,r:H*.58,col:'rgba(32,76,255,.12)'},{x:W*.78,y:H*.66,r:H*.62,col:'rgba(255,35,104,.09)'},{x:W*.55,y:H*.18,r:H*.35,col:'rgba(101,39,255,.08)'}]){const q=c.createRadialGradient(gl.x,gl.y,0,gl.x,gl.y,gl.r);q.addColorStop(0,gl.col);q.addColorStop(1,'rgba(0,0,0,0)');c.fillStyle=q;c.fillRect(0,0,W,H)}
- }else{c.globalAlpha=Math.min(1,S.tex*1.4);c.drawImage(fab,0,0);c.globalAlpha=1}
- if(S.dim==='3d'){c.strokeStyle=emb?'#ffffff40':'#7b5cff90';c.lineWidth=1.5;c.beginPath();for(let k=-12;k<=12;k++){c.moveTo(W/2,HZ);c.lineTo(W/2+k*220,H)}for(let k=1;k<=10;k++){const y=HZ+(H-HZ)*(k/10)**2;c.moveTo(0,y);c.lineTo(W,y)}c.stroke()}
- if(S.trail&&S.hist.length>1){c.lineWidth=emb?6:10;c.lineCap='round';for(let k=1;k<S.hist.length;k++){const a=k/S.hist.length,[x,y]=S.hist[k],[x0,y0]=S.hist[k-1];c.globalAlpha=a*.6;c.strokeStyle=emb?THREAD[k%8]:['#6b43ff','#ff3d8b','#43eaff'][k%3];c.beginPath();if(emb){c.rect(Math.floor(x/C)*C,Math.floor(y/C)*C,C,C);c.fillStyle=c.strokeStyle;c.fill()}else{c.moveTo(x0,y0);c.lineTo(x,y);c.stroke()}}c.globalAlpha=1}
- emoLayer(c,S,T,emb);
- for(const g of S.gs){/* X trail */
-  if(g.dash){const R=RAMPS[g.ramp];c.beginPath();let first=1;for(let k=30;k>=0;k--){const tt=T-k;if(tt<g.dash.t0||tt<g.born)continue;const[dx,dy]=dashD(g,tt),[x,y]=proj(S,g.x+dx,g.y+dy);if(emb)stitch(c,Math.floor(x/C),Math.floor(y/C),'-');else{c[first?'moveTo':'lineTo'](x,y);first=0}}
-   c.globalAlpha=.8;c.lineWidth=emb?3:9;c.lineCap='round';c.strokeStyle=emb?THREAD[g.pal[0]]:R[1];c.stroke();c.globalAlpha=1}
-  eachPart(S,g,T,(...a)=>{if(emb){c.globalAlpha=1;ePart(c,g,...a,S.tex)}else gPart(c,g,...a,S.tex)});c.globalAlpha=1}
- for(const q of S.rip)for(let k=0;k<q.n;k++){const t=(T-q.t0)/60-k*.18;if(t<0||t>2.2)continue;const f=420*(1+.3*q.i)*t,al=Math.exp(-t/.9);c.globalAlpha=al*.85;
-  if(!emb){const rg=c.createLinearGradient(q.x-f,q.y-f,q.x+f,q.y+f);rg.addColorStop(0,'#43eaff');rg.addColorStop(.38,'#a04bff');rg.addColorStop(.7,'#ff326c');rg.addColorStop(1,'#ffcc6b');c.strokeStyle=rg;c.shadowColor='#8d4cff';c.shadowBlur=14;c.lineWidth=4+2*q.i;c.beginPath();c.arc(q.x,q.y,f,0,7);c.stroke();c.shadowBlur=0}
-  else{const n=Math.round(f/C),cx=Math.floor(q.x/C),cy=Math.floor(q.y/C);c.strokeStyle=THREAD[(k*3+1)%8];c.lineWidth=3;c.beginPath();for(let i=-n;i<=n;i+=1){if(i%2)continue;stitch(c,cx+i,cy-n,'x');stitch(c,cx+i,cy+n,'x');stitch(c,cx-n,cy+i,'x');stitch(c,cx+n,cy+i,'x')}c.stroke()}}
- c.globalAlpha=1;
- if(showRet&&live){const e=S.em;c.strokeStyle='#ffffff90';c.lineWidth=1.5;c.beginPath();c.arc(e.x,e.y,14,0,7);c.moveTo(e.x-24,e.y);c.lineTo(e.x+24,e.y);c.moveTo(e.x,e.y-24);c.lineTo(e.x,e.y+24);c.stroke()}
+function render(S,live,showRet){
+ const c=ctx;
+ c.setTransform(1,0,0,1,0,0);
+ c.fillStyle='#080808';
+ c.fillRect(0,0,cv.width,cv.height);
+ c.setTransform(sc,0,0,sc,ox0,oy0);
+ c.save();
+ c.beginPath();c.rect(0,0,W,H);c.clip();
+ // Visual reset: intentionally render no shapes, trails, textures, grids, particles or emotion graphics.
+ c.fillStyle='#080808';c.fillRect(0,0,W,H);
  c.restore();
- const u=(S.tick-S.lookT)/15;if(u>=0&&u<1){const b=Math.max(1,Math.round(28*(1-u))),w=Math.max(1,cv.width/b|0),h=Math.max(1,cv.height/b|0);tmp.width=w;tmp.height=h;const t2=tmp.getContext('2d');t2.drawImage(cv,0,0,w,h);c.setTransform(1,0,0,1,0,0);c.imageSmoothingEnabled=false;c.drawImage(tmp,0,0,cv.width,cv.height);c.imageSmoothingEnabled=true}}
-/* ---------- EMOTIONS (from sketch sheet) ---------- */
+}
 function emoStep(S,lx,ly){const G=S.G,T=S.tick;let av=G.av*.85;G.lx=lx;G.ly=ly;
  if(Math.hypot(lx,ly)>.6){const a=Math.atan2(ly,lx);if(G.a!==null){let d=a-G.a;if(d>Math.PI)d-=6.2832;if(d<-Math.PI)d+=6.2832;av=G.av+(d*60-G.av)*.25}G.a=a}else G.a=null;
  G.av=av;
