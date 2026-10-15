@@ -159,6 +159,79 @@ function drawNewEmotion(c,S,T,emb){
   approve:{kind:8,spread:.9,twist:.6,sharp:.05,rate:.55,palette:['#65f0c1','#6da7ff','#d4fff2','#ffffff']}
  }[e.type]||{kind:0,spread:1,twist:1,sharp:.2,rate:1,palette:['#5d2cff','#c23dff','#4eeaff','#fff']};
  const cx=S.em.x,cy=S.em.y,scale=(.7+.35*I)*(0.94+.06*Math.sin(T*.07*profile.rate))*profile.spread;
+ // Excitement follows the frame-6 sketch: pop-art ring forms first, then a radial wheel,
+ // then a wave of flowing lines. Seeded placement changes each activation, not each frame.
+ if(e.type==='excite'){
+  const release=Math.max(0,(T-(e.last||T))/60),circleFade=1-ez(release/.34),lineFade=1-ez(Math.max(0,release-.08)/1.35);
+  const rand=(n)=>hs(seed,n,71)/4294967296, palette=['#c8ff45','#a8f65d','#30e7c5','#28b9ef','#f44b9a','#ff8b45','#b34cff','#f7f3ff'];
+  const pick=n=>palette[(Math.floor(rand(n)*palette.length))%palette.length];
+  c.save();c.globalAlpha=fade;c.translate(cx,cy);c.scale(2.35,2.35);c.translate(-200,-200);
+  const count=7+Math.floor(I*5),nodes=[];
+  for(let k=0;k<count;k++){
+   const ang=rand(k+2)*TAU,rad=42+rand(k+20)*122;
+   nodes.push({x:200+Math.cos(ang)*rad*1.12,y:200+Math.sin(ang)*rad*.78,r:12+rand(k+40)*24,col:pick(k+60),hot:pick(k+80),delay:rand(k+100)*.22});
+  }
+  // A common origin is visible before the wave fans out around it.
+  const origin={x:198+Math.sin(seed)*10,y:202+Math.cos(seed)*8};
+  const progress=ez(Math.max(0,(age-.42)/1.05));
+  if(lineFade>.005&&age>.4){
+   c.save();c.globalAlpha*=lineFade*(.35+.65*I);c.lineCap='round';c.lineJoin='round';
+   for(let k=0;k<17;k++){
+    const an=rand(k+240)*TAU,reach=110+rand(k+280)*205,phase=rand(k+320)*TAU,amp=5+rand(k+360)*15;
+    const end=reach*progress;
+    if(end<2)continue;
+    const grad=c.createLinearGradient(origin.x,origin.y,origin.x+Math.cos(an)*reach,origin.y+Math.sin(an)*reach);
+    grad.addColorStop(0,palette[(k+2)%palette.length]);grad.addColorStop(.52,palette[(k+4)%palette.length]);grad.addColorStop(1,palette[(k+6)%palette.length]);
+    c.strokeStyle=grad;c.lineWidth=1.4+rand(k+400)*2.7;c.shadowColor=palette[(k+4)%palette.length];c.shadowBlur=8+12*I;
+    c.beginPath();
+    for(let j=0;j<=Math.ceil(end/4);j++){
+     const d=Math.min(end,j*4),wave=Math.sin(d*.035+phase+T*.045)*amp*(.3+d/reach);
+     const x=origin.x+Math.cos(an)*d-Math.sin(an)*wave,y=origin.y+Math.sin(an)*d+Math.cos(an)*wave;
+     c[j?'lineTo':'moveTo'](x,y);
+    }
+    c.stroke();
+   }
+   c.shadowBlur=0;c.restore();
+  }
+  // The central wheel blooms after the circles, with fine spokes and a luminous core.
+  const wheel=ez((age-.28)/.36)*circleFade;
+  if(wheel>.005){
+   const rr=58*wheel;
+   c.save();c.globalAlpha*=wheel;c.shadowColor='#f6f3ff';c.shadowBlur=18+28*I;
+   const wg=c.createRadialGradient(origin.x-13,origin.y-18,2,origin.x,origin.y,rr);
+   wg.addColorStop(0,'#ffffff');wg.addColorStop(.35,'#d8fbff');wg.addColorStop(.72,'#a8ff60');wg.addColorStop(1,'#8c36ff');
+   c.fillStyle=wg;c.beginPath();c.arc(origin.x,origin.y,rr,0,TAU);c.fill();
+   c.shadowBlur=0;c.strokeStyle='#17101f';c.lineWidth=3.5;c.stroke();
+   c.strokeStyle='#fff';c.lineWidth=1.25;
+   for(let k=0;k<32;k++){const an=k/32*TAU+T*.006;c.beginPath();c.moveTo(origin.x+Math.cos(an)*rr*.12,origin.y+Math.sin(an)*rr*.12);c.lineTo(origin.x+Math.cos(an)*rr*.94,origin.y+Math.sin(an)*rr*.94);c.stroke()}
+   c.restore();
+  }
+  // Offset, thickly outlined circles with halftone dots; each has its own palette and pop timing.
+  nodes.forEach((n,k)=>{
+   const appear=ez((age-n.delay)/.19),pop=release>.0?1-ez(release/.34):1;
+   const bounce=1+.22*Math.sin(Math.min(1,Math.max(0,(age-n.delay)/.19))*Math.PI);
+   const s=appear*pop*bounce;if(s<.012)return;
+   const r=n.r*s*(1+release*2.2),x=n.x+(n.x-origin.x)*Math.min(.18,release*.18),y=n.y+(n.y-origin.y)*Math.min(.18,release*.18),R=r;
+   c.save();c.globalAlpha*=Math.min(1,appear*1.4)*pop;c.shadowColor=n.hot;c.shadowBlur=9+22*I;
+   const g=c.createRadialGradient(x-R*.35,y-R*.45,1,x,y,R*1.25);
+   g.addColorStop(0,'#ffffff');g.addColorStop(.18,n.hot);g.addColorStop(.62,n.col);g.addColorStop(1,'#20112f');
+   c.fillStyle=g;c.beginPath();c.arc(x,y,R,0,TAU);c.fill();
+   c.shadowBlur=0;c.strokeStyle='#100d17';c.lineWidth=3.8;c.stroke();
+   c.beginPath();c.arc(x,y,R*.69,0,TAU);c.fillStyle='#fff7eb';c.fill();c.strokeStyle='#17101f';c.lineWidth=2.2;c.stroke();
+   const core=c.createRadialGradient(x-R*.2,y-R*.25,1,x,y,R*.56);core.addColorStop(0,'#fff');core.addColorStop(.24,n.hot);core.addColorStop(1,n.col);
+   c.fillStyle=core;c.beginPath();c.arc(x,y,R*.53,0,TAU);c.fill();
+   // Halftone is clipped to the coloured disc, giving a printed / reference-sheet finish.
+   c.save();c.beginPath();c.arc(x,y,R*.51,0,TAU);c.clip();c.fillStyle='#130d20';c.globalAlpha*=.38;
+   const step=Math.max(3.2,R*.18),dot=Math.max(.7,R*.035);
+   for(let yy=y-R*.48;yy<=y+R*.48;yy+=step)for(let xx=x-R*.48;xx<=x+R*.48;xx+=step){
+    const dx=xx-x,dy=yy-y;if(dx*dx+dy*dy<R*R*.23)c.beginPath(),c.arc(xx,yy,dot,0,TAU),c.fill();
+   }
+   c.restore();
+   c.globalAlpha*=.7;c.strokeStyle='#fff';c.lineWidth=1.2;c.beginPath();c.arc(x-R*.12,y-R*.13,R*.28,Math.PI*1.05,Math.PI*1.72);c.stroke();
+   c.restore();
+  });
+  c.restore();return;
+ }
  c.save();c.globalAlpha=fade;c.translate(cx,cy);c.scale(scale,scale);c.rotate((e.dx||0)*.08*Math.sin(age*profile.rate));
  const p=profile,phase=T*.025*p.rate,colors=p.palette;
  // A distinct procedural contour per emotional family; the underlying contour logic is shared.
