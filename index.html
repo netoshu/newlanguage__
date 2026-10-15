@@ -149,7 +149,7 @@ function render(S,live,showRet){const c=ctx,T=S.look==='embroidery'?Math.floor(S
   for(const gl of [{x:W*.18,y:H*.3,r:H*.58,col:'rgba(32,76,255,.12)'},{x:W*.78,y:H*.66,r:H*.62,col:'rgba(255,35,104,.09)'},{x:W*.55,y:H*.18,r:H*.35,col:'rgba(101,39,255,.08)'}]){const q=c.createRadialGradient(gl.x,gl.y,0,gl.x,gl.y,gl.r);q.addColorStop(0,gl.col);q.addColorStop(1,'rgba(0,0,0,0)');c.fillStyle=q;c.fillRect(0,0,W,H)}
  }else{c.globalAlpha=Math.min(1,S.tex*1.4);c.drawImage(fab,0,0);c.globalAlpha=1}
  if(S.dim==='3d'){c.strokeStyle=emb?'#ffffff40':'#7b5cff90';c.lineWidth=1.5;c.beginPath();for(let k=-12;k<=12;k++){c.moveTo(W/2,HZ);c.lineTo(W/2+k*220,H)}for(let k=1;k<=10;k++){const y=HZ+(H-HZ)*(k/10)**2;c.moveTo(0,y);c.lineTo(W,y)}c.stroke()}
- if(S.trail&&S.hist.length>1){c.lineWidth=emb?6:10;c.lineCap='round';for(let k=1;k<S.hist.length;k++){const a=k/S.hist.length,[x,y]=S.hist[k],[x0,y0]=S.hist[k-1];c.globalAlpha=a*.6;c.strokeStyle=emb?THREAD[k%8]:RAMPS.cool[k%3];c.beginPath();if(emb){c.rect(Math.floor(x/C)*C,Math.floor(y/C)*C,C,C);c.fillStyle=c.strokeStyle;c.fill()}else{c.moveTo(x0,y0);c.lineTo(x,y);c.stroke()}}c.globalAlpha=1}
+ if(S.trail&&S.hist.length>1){c.lineWidth=emb?6:10;c.lineCap='round';for(let k=1;k<S.hist.length;k++){const a=k/S.hist.length,[x,y]=S.hist[k],[x0,y0]=S.hist[k-1];c.globalAlpha=a*.6;c.strokeStyle=emb?THREAD[k%8]:['#6b43ff','#ff3d8b','#43eaff'][k%3];c.beginPath();if(emb){c.rect(Math.floor(x/C)*C,Math.floor(y/C)*C,C,C);c.fillStyle=c.strokeStyle;c.fill()}else{c.moveTo(x0,y0);c.lineTo(x,y);c.stroke()}}c.globalAlpha=1}
  emoLayer(c,S,T,emb);
  for(const g of S.gs){/* X trail */
   if(g.dash){const R=RAMPS[g.ramp];c.beginPath();let first=1;for(let k=30;k>=0;k--){const tt=T-k;if(tt<g.dash.t0||tt<g.born)continue;const[dx,dy]=dashD(g,tt),[x,y]=proj(S,g.x+dx,g.y+dy);if(emb)stitch(c,Math.floor(x/C),Math.floor(y/C),'-');else{c[first?'moveTo':'lineTo'](x,y);first=0}}
@@ -236,9 +236,15 @@ function emoLayer(c,S,T,emb){if(!S.emo&&!S.tl.length)return;
  const d=ex.getImageData(0,0,es.width,es.height).data,n=es.width,idx=new Int8Array(n*es.height);
  for(let i=0;i<idx.length;i++){const o=i*4;if(d[o+3]<90){idx[i]=-1;continue}let b=0,bd=1e9;for(let k=0;k<8;k++){const q=TR[k],dd=(d[o]-q[0])**2+(d[o+1]-q[1])**2+(d[o+2]-q[2])**2;if(dd<bd){bd=dd;b=k}}idx[i]=b}
  c.lineWidth=3;c.lineCap='round';for(let k=0;k<8;k++){c.strokeStyle=THREAD[k];c.beginPath();for(let i=0;i<idx.length;i++)if(idx[i]===k)stitch(c,i%n,(i/n)|0,'x');c.stroke()}}
-/* ---------- EMOTIONS v2 (updated sheet: overrides the block above) ---------- */
-const GP=['#e2f77a','#6a2cc4','#4fb8c8','#222222','#e0564a','#d9d5c8','#2ee89a','#0a4fd0'],EP={celebrate:6,excite:5,annoy:4,taunt:3,tease:3,disagree:3,approve:3,indirect:2,init:2,retreat:2};
-function emoStep(S,lx,ly,rx,ry){const G=S.G,T=S.tick;G.gx=G.gx||[];G.gy=G.gy||[];G.lx=lx;G.ly=ly;
+/* ---------- PADMOTION VISUAL SYSTEM v3 ----------
+   One graphic language across every emotion:
+   asymmetric flowing contours, tapered ribbons, orbital accents and a shared
+   luminous material. Gesture and silhouette change per emotion; rendering stays coherent.
+*/
+const GP=['#e2f77a','#6a2cc4','#4fb8c8','#222222','#e0564a','#d9d5c8','#2ee89a','#0a4fd0'];
+const EP={celebrate:6,excite:5,annoy:4,taunt:3,tease:3,disagree:3,approve:3,indirect:2,init:2,retreat:2};
+function emoStep(S,lx,ly,rx,ry){
+ const G=S.G,T=S.tick;G.gx=G.gx||[];G.gy=G.gy||[];G.lx=lx;G.ly=ly;
  const rot=(k,x,y)=>{const o=G['a'+k],pv=G['av'+k]||0;let v=pv*.85;if(Math.hypot(x,y)>.5){const a=Math.atan2(y,x);if(o!=null){let d=a-o;if(d>Math.PI)d-=TAU;if(d<-Math.PI)d+=TAU;v=pv+(d*60-pv)*.3}G['a'+k]=a}else G['a'+k]=null;G['av'+k]=v;return v};
  const aL=rot('L',lx,ly),aR=rot('R',rx,ry);
  const fl=(k,v,ok)=>{if(ok&&Math.abs(v)>.35){const s=Math.sign(v);if(G[k+'s']&&s!==G[k+'s'])G[k].push(T);G[k+'s']=s}G[k]=G[k].filter(t=>T-t<72);return G[k]};
@@ -247,54 +253,82 @@ function emoStep(S,lx,ly,rx,ry){const G=S.G,T=S.tick;G.gx=G.gx||[];G.gy=G.gy||[]
  G.hD=Math.abs(lx)>.45&&Math.abs(ly)>.45&&st?G.hD+1:0;G.hU=ly<-.7&&Math.abs(lx)<.4&&st?G.hU+1:0;G.hB=ly>.7&&Math.abs(lx)<.4&&st?G.hB+1:0;
  const r=aL<-2.5&&aR>2.5?['celebrate',90]:aL<-2.5?['excite',90]:fx.length>=3&&iv<14?['annoy',60]:fx.length>=2&&iv>=14?['taunt',80]:fy.length>=3&&st?['tease',80]:gx.length>=2?['disagree',70]:gy.length>=2?['approve',70]:G.hD>12?['indirect',30]:G.hU>12?['init',30]:G.hB>12?['retreat',30]:null;
  let e=S.emo;
- if(r){if(e&&e.type===r[0]&&T<=e.until){e.until=T+r[1];e.last=T}
-  else if(!e||T>e.until||EP[r[0]]>EP[e.type]||T>e.last+12)e=S.emo={type:r[0],t0:T,last:T,seed:hs(S.seed,++S.ev,11),until:T+r[1],dx:Math.sign(lx)||1,dy:Math.sign(ly)||1}}
+ if(r){if(e&&e.type===r[0]&&T<=e.until){e.until=T+r[1];e.last=T}else if(!e||T>e.until||EP[r[0]]>EP[e.type]||T>e.last+12)e=S.emo={type:r[0],t0:T,last:T,seed:hs(S.seed,++S.ev,11),until:T+r[1],dx:Math.sign(lx)||1,dy:Math.sign(ly)||1}}
  if(e&&e.type==='init'&&T<e.until&&T-e.last<8&&(T-e.t0)%17===0)S.tl.push({x:hs(e.seed,T,3)%4-1.5,y:-60,k:hs(e.seed,T,4)%6,c:hs(e.seed,T,5)%8});
  for(const t of S.tl)t.y+=(380+300*S.i)/60;S.tl=S.tl.filter(t=>t.y<H+120);
- if(e&&T<e.until&&T%6===0){const a=(T-e.t0)/60,I=.3+.7*S.i,p=(Math.sin(T/20)+1)/2,f=Math.max(.1,1-a/2.5),q=Math.min(1,a/.8),bt=(T/15|0)%2;
+ if(e&&T<e.until&&T%6===0){const I=.3+.7*S.i,p=(Math.sin(T/20)+1)/2,f=Math.max(.1,1-(T-e.t0)/60/2.5),q=Math.min(1,(T-e.t0)/60/.8),bt=(T/15|0)%2;
   const m={excite:[.15+.6*I*p,.2+.5*I*p],celebrate:[bt?.7*I:.1,bt?.1:.7*I],taunt:[.1+.6*I*p,.1+.6*I*(1-p)],annoy:[.1*I,.35+.6*I*hs(T,1,2)/4294967296],tease:[.15+.5*I*p,.1+.3*I],indirect:[.5*I*(1-q)+.1,.2+.4*q*I],init:[(T/20)%1<.35?.3+.6*I:.05,.1],retreat:[.1*f,.15+.35*f*(1+Math.sin(T/12))/2],disagree:[(T%24)<8?.8:.1,.3],approve:[.15,.3+.2*p]}[e.type];
-  S.rumble.push({w:m[1],s:m[0],ms:110})}}
-function ht(c,x,y,R,f){c.fillStyle=f;for(let k=1;k<=5;k++){const rr=R*k/5,m=k*7;for(let i=0;i<m;i++){const t=i/m*TAU+k;c.beginPath();c.arc(x+Math.cos(t)*rr,y+Math.sin(t)*rr,R*.11*(1.15-k/6),0,TAU);c.fill()}}}
-function blade(c,x,y,L,w,an,cv,f){const ca=Math.cos(an),sa=Math.sin(an),nx=-sa,ny=ca,mx=x+ca*L*.5+nx*cv,my=y+sa*L*.5+ny*cv;c.fillStyle=f;c.beginPath();c.moveTo(x+nx*w,y+ny*w);c.quadraticCurveTo(mx,my,x+ca*L,y+sa*L);c.quadraticCurveTo(mx-nx*w*1.6,my-ny*w*1.6,x-nx*w,y-ny*w);c.closePath();c.fill()}
-// Excitement: halftone ringed circles pop out, wheel, lines grow from one point in waves; on stop circles pop away, lines fade
-X.excite=(c,a,I,E,col,e,T)=>{const r=rng(e.seed),n=6+(r()*4|0)+(I*5|0),h=r()*8|0,K=[],L=[],tt=T/60,xt=Math.max(0,(T-e.last)/60),pop=1-ez(xt/.35),fd=1-ez(xt/1.2);
- for(let i=0;i<n;i++)K.push([200+(r()-.5)*340,200+(r()-.5)*300,14+r()*34,h+(r()*8|0),h+(r()*8|0),h+(r()*8|0)]);
- for(let i=0;i<12;i++)L.push([r()*TAU,120+r()*180,r()*6,h+(r()*8|0),.5+r()]);
- K.forEach((k,i)=>{const s=eb((a-i*.07)/.35)*pop;if(s<=.02)return;const R=k[2]*s;c.fillStyle=col(k[3]);c.beginPath();c.arc(k[0],k[1],R,0,TAU);c.fill();if(!E)ht(c,k[0],k[1],R*.92,col(k[4]));c.fillStyle='#fff';c.beginPath();c.arc(k[0],k[1],R*.45,0,TAU);c.fill();c.fillStyle=col(k[5]);c.beginPath();c.arc(k[0],k[1],R*.2,0,TAU);c.fill()});
- const w=ez((a-.5)/.4)*pop;if(w>.02){const R=64*w;c.fillStyle='#fff';c.strokeStyle=col(3);c.lineWidth=E?8:5;c.beginPath();c.arc(200,200,R,0,TAU);c.fill();c.stroke();c.lineWidth=E?6:2;for(let i=0;i<28;i++){const t=i/28*TAU+tt*.6;c.beginPath();c.moveTo(200,200);c.lineTo(200+Math.cos(t)*R,200+Math.sin(t)*R);c.stroke()}}
- const q=ez((a-.9)/1.2);if(q>0&&fd>.01){const ga=c.globalAlpha;c.globalAlpha=ga*fd;c.lineWidth=E?7:3;for(const l of L){c.strokeStyle=col(l[3]);c.beginPath();const len=l[1]*q;for(let s=0;s<=len;s+=8){const wv=Math.sin(s*.045*l[4]+l[2]+tt*3)*(10+s*.12);c[s?'lineTo':'moveTo'](200+Math.cos(l[0])*s-Math.sin(l[0])*wv,200+Math.sin(l[0])*s+Math.cos(l[0])*wv)}c.stroke()}c.globalAlpha=ga}};
-// Annoyance: cybersigilism blades, mirrored, overlapping, randomized
-X.annoy=(c,a,I,E,col,e,T)=>{const r=rng(e.seed),jr=rng(hs(e.seed,T,1)),n=7+(r()*4|0)+(I*6|0),h=r()*8|0;
- for(let i=0;i<n;i++){const x=200+(r()-.5)*120,y=200+(r()-.5)*120,an=r()*TAU,L=(70+r()*150)*(.6+I*.6),w=4+r()*14,cv=(r()-.5)*90,f=col(h+(r()*8|0)),s=ez((a-i*.07)/.3),j=1+I*3;
-  if(s>0)for(const m of[1,-1])blade(c,m>0?x:400-x+(jr()-.5)*j,y+(jr()-.5)*j,L*s,w,m>0?an:Math.PI-an,cv*m,f)}};
-// Teasing: one main blob grows, smaller blobs smear out of it in different directions
-X.tease=(c,a,I,E,col,e,T,S)=>{const r=rng(e.seed),tt=T/60,ly=S.G.ly,h=r()*8|0,R0=(55+r()*25+30*I)*ez(a/.7);
- c.fillStyle=c.strokeStyle=col(h);c.beginPath();c.arc(200,200+ly*10,R0,0,TAU);c.fill();
- for(let i=0;i<8;i++){const an=r()*TAU,d=60+r()*110,rr=14+r()*34,s=ez((a-.5-i*.22)/.6);if(s<=0)continue;const x=200+Math.cos(an)*d*s+Math.sin(tt*2+i)*5,y=200+Math.sin(an)*d*s+ly*20*s+Math.cos(tt*2+i)*5;
-  c.fillStyle=c.strokeStyle=col(h+(i%3));c.lineWidth=rr*s*1.3;c.beginPath();c.moveTo(200,200+ly*10);c.lineTo(x,y);c.stroke();c.beginPath();c.arc(x,y,rr*s,0,TAU);c.fill()}};
-// Indirectness: brush strokes start from a single point and fan out diagonally, leaving particles
-X.indirect=(c,a,I,E,col,e)=>{const r=rng(e.seed),p=ez(a/1.1),h=r()*8|0,b=Math.atan2(e.dy,e.dx),ox=200-Math.cos(b)*150,oy=200-Math.sin(b)*150;
- for(let k=-4;k<=4;k++){const L=.6+r()*.4,an=b+k*.1+(r()-.5)*.1,len=330*L,wm=(E?15:9+r()*8)*(1-Math.abs(k)*.06),cb=(r()-.5)*90,N=26;c.fillStyle=col(h+k);
-  for(let j=0;j<=N;j++){const t=p*L*j/N,x=ox+Math.cos(an)*len*t/L-Math.sin(an)*cb*Math.sin(t*Math.PI),y=oy+Math.sin(an)*len*t/L+Math.cos(an)*cb*Math.sin(t*Math.PI),rd=wm*Math.sin(Math.min(1,t*3)*1.5708)*(1-t*.4);c.beginPath();c.arc(x,y,rd,0,TAU);c.fill()}}
- c.fillStyle=col(h+3);for(let i=0;i<30;i++){const u=r(),v=(r()-.5)*170,rr=2+r()*6;if(u<p){c.beginPath();c.arc(ox+Math.cos(b)*u*330-Math.sin(b)*v,oy+Math.sin(b)*u*330+Math.cos(b)*v,E?rr+3:rr,0,TAU);c.fill()}}};
-// Retreat: striped capsules that drift apart and shrink, staying centered
-X.retreat=(c,a,I,E,col,e)=>{const r=rng(e.seed),h=r()*8|0,n=3+(r()*3|0);
- for(let i=0;i<n;i++){const w=50+r()*70,hh=26+r()*34,x=200+(r()-.5)*190,y=200+(r()-.5)*190,s=ez((a-i*.2)/.5)*(1-.25*Math.min(1,a/3)),cx=x+Math.min(1,a/3)*(i%2?-1:1)*30,rw=w*s,rh=hh*s;if(s<=0)continue;
-  c.save();c.beginPath();c.ellipse(cx,y,rw,rh,0,0,TAU);c.clip();c.fillStyle=col(h+i);const m=12,sh=2*rh/m;for(let j=0;j<m;j++)c.fillRect(cx-rw,y-rh+j*sh,2*rw,sh*(1-j/(m+1)*.85));c.restore()}};
-// Disagreement: a tangle that draws itself with angular and circular shapes
-X.disagree=(c,a,I,E,col,e)=>{const r=rng(e.seed),h=r()*8|0,N=150,pts=[];let x=200,y=200,hd=r()*TAU;
- for(let i=0;i<N;i++){hd+=(r()-.5)*1.6+(i%10===9?(r()<.5?2:-2):0);x=Math.max(60,Math.min(340,x+Math.cos(hd)*14));y=Math.max(60,Math.min(340,y+Math.sin(hd)*14));pts.push([x,y])}
- const n=Math.floor(N*ez(a/1.8));c.lineWidth=E?9:6;c.strokeStyle=col(h);c.beginPath();for(let i=0;i<n;i++)c[i?'lineTo':'moveTo'](pts[i][0],pts[i][1]);c.stroke();
- for(let i=0;i<4;i++){const p=Math.min(1,Math.max(0,(a-.4-i*.3)/.8)),sx=200+(r()-.5)*220,sy=200+(r()-.5)*220,R=26+r()*40,an=r()*6,tri=r()<.5;c.strokeStyle=col(h+1+i);c.lineWidth=E?9:5;c.beginPath();
-  if(tri){const m=3+(i&1);for(let j=0;j<=m*p;j++){const t=an+j/m*TAU;c[j?'lineTo':'moveTo'](sx+Math.cos(t)*R,sy+Math.sin(t)*R)}}else c.arc(sx,sy,R,an,an+TAU*p);c.stroke()}};
-// Approval: bubbles swirl inside a circle, then wave ripples travel away
-X.approve=(c,a,I,E,col,e,T)=>{const r=rng(e.seed),tt=T/60,h=r()*8|0,b=ez(a/.6);
- c.fillStyle=col(3);c.strokeStyle=col(h);c.lineWidth=E?9:5;c.beginPath();c.arc(200,200,62*b,0,TAU);c.fill();c.stroke();
- for(let i=0;i<8;i++){const t=tt*(.8+r()*.8)*(i%2?1:-1)+i*.8,rr=(8+r()*40)*b,s=ez((a-.3-i*.1)/.4);c.fillStyle=col(h+i);c.beginPath();c.arc(200+Math.cos(t)*rr,200+Math.sin(t)*rr,(4+r()*7)*s,0,TAU);c.fill()}
- if(a>.8)for(let j=0;j<3;j++){const q=(tt*.5+j/3)%1;c.strokeStyle=E?col(h):`rgba(255,255,255,${(1-q)*.8})`;c.lineWidth=E?3+7*(1-q):3;for(const m of[-1,1]){c.beginPath();c.arc(200,200,70+q*110,m>0?-.6:Math.PI-.6,m>0?.6:Math.PI+.6);c.stroke()}}};
-// Celebration: twisting ribbon of lines grows while both sticks rotate, fades from its start after stopping
-X.celebrate=(c,a,I,E,col,e,T)=>{const r=rng(e.seed),h=r()*8|0,M=12+(r()*6|0),ph=[r()*6,r()*6,r()*6],xt=Math.max(0,(T-e.last)/60),hd=Math.min(1,a*.35),tl=ez(xt/1.6)*hd,N=140;c.lineWidth=E?7:3;
- for(let k=0;k<M;k++){c.strokeStyle=col(h+(k>>1));c.beginPath();let f=1;for(let j=Math.floor(tl*N);j<=hd*N;j++){const u=j/N,off=(k-M/2)*(7+10*I)*Math.cos(u*TAU*3+ph[2]),x=200+Math.sin(u*TAU*1.5+ph[0])*150,y=200+Math.sin(u*TAU*2+ph[1])*110,dx=Math.cos(u*TAU*1.5+ph[0])*150*TAU*1.5/N,dy=Math.cos(u*TAU*2+ph[1])*110*TAU*2/N,L=Math.hypot(dx,dy)||1;c[f?'moveTo':'lineTo'](x-dy/L*off,y+dx/L*off);f=0}c.stroke()}};
+  if(m)S.rumble.push({w:m[1],s:m[0],ms:110})}
+}
+function v3Path(c,pts,fill,stroke,lw=5){
+ c.beginPath();pts.forEach((p,i)=>c[i?'lineTo':'moveTo'](p[0],p[1]));c.closePath();
+ if(fill){c.fillStyle=fill;c.fill()}if(stroke){c.strokeStyle=stroke;c.lineWidth=lw;c.lineJoin='round';c.stroke()}
+}
+function v3Ribbon(c,pts,w,col,alpha=1){
+ c.save();c.globalAlpha*=alpha;c.lineCap='round';c.lineJoin='round';c.strokeStyle=col;c.lineWidth=w;c.beginPath();
+ pts.forEach((p,i)=>c[i?'lineTo':'moveTo'](p[0],p[1]));c.stroke();c.restore()
+}
+function v3Orbit(c,x,y,r,a0,a1,col,w=4){
+ c.beginPath();c.arc(x,y,r,a0,a1);c.strokeStyle=col;c.lineWidth=w;c.lineCap='round';c.stroke()
+}
+function v3Dot(c,x,y,r,col){c.fillStyle=col;c.beginPath();c.arc(x,y,r,0,TAU);c.fill()}
+function v3Blade(c,x,y,L,w,an,bend,col){
+ const dx=Math.cos(an),dy=Math.sin(an),nx=-dy,ny=dx,mx=x+dx*L*.52+nx*bend,my=y+dy*L*.52+ny*bend;
+ c.beginPath();c.moveTo(x+nx*w,y+ny*w);c.quadraticCurveTo(mx,my,x+dx*L,y+dy*L);c.quadraticCurveTo(mx-nx*w*1.7,my-ny*w*1.7,x-nx*w,y-ny*w);c.closePath();c.fillStyle=col;c.fill()
+}
+function v3Setup(c,E){c.lineCap='round';c.lineJoin='round';c.lineWidth=E?7:4}
+function v3Colors(E,col,i){return E?THREAD[((i%8)+8)%8]:col(i,65)}
+/* Excitement — a lifted spiral with orbiting sparks and a rising tail. */
+X.excite=(c,a,I,E,col,e,T)=>{const r=rng(e.seed),h=r()*8|0,p=ez(a/1.4),fade=1-ez(Math.max(0,(T-e.last)/60)/1.2),spin=a*1.6;
+ v3Setup(c,E);for(let k=0;k<3;k++){const rr=(35+k*24)*p;v3Orbit(c,200,205,rr,spin+k*.8,spin+1.7+k*.8,v3Colors(E,col,h+k),E?6:4)}
+ for(let k=0;k<9;k++){const t=spin+k*TAU/9,rr=(65+25*Math.sin(k*2.1+a))*p,x=200+Math.cos(t)*rr,y=200+Math.sin(t)*rr*.8;
+ v3Dot(c,x,y,(4+(k%3)*2)*p,v3Colors(E,col,h+k));v3Ribbon(c,[[x,y],[x+Math.cos(t)*18*p,y-12*p],[x+Math.cos(t)*27*p,y-28*p]],E?5:3,v3Colors(E,col,h+k),fade)}
+ v3Ribbon(c,Array.from({length:22},(_,i)=>{const t=i/21,an=spin+t*4.8,rr=8+t*100*p;return[200+Math.cos(an)*rr,205+Math.sin(an)*rr*.72-t*45*p]}),E?8:5,v3Colors(E,col,h+2),fade)};
+/* Taunting — paired, curling hooks that lean in and withdraw. */
+X.taunt=(c,a,I,E,col,e,T)=>{const r=rng(e.seed),h=r()*8|0,p=ez(a/1.1),w=1+.12*Math.sin(T/9);
+ for(let k=0;k<3;k++)for(const side of[-1,1]){const y=135+k*62,reach=(48+k*12)*p*w,pts=[];
+ for(let j=0;j<=30;j++){const t=j/30,an=t*TAU*.82+Math.sin(a*2+k)*.25,rr=reach*(.12+t);pts.push([200+side*(18+Math.cos(an)*rr),y+Math.sin(an)*rr*.68])}
+ v3Ribbon(c,pts,E?7:4,v3Colors(E,col,h+k),.9)}
+ for(let k=0;k<5;k++){const x=200+(k-2)*28*p,y=205+Math.sin(a*2+k)*10;v3Dot(c,x,y,(3+k%2*2)*p,v3Colors(E,col,h+k))}};
+/* Annoyance — compact jagged shards crossing a tense central axis. */
+X.annoy=(c,a,I,E,col,e,T)=>{const r=rng(e.seed),h=r()*8|0,p=ez(a/.8),shake=Math.sin(T*1.8)*3*I,n=7+(I*4|0);
+ for(let k=0;k<n;k++){const an=r()*TAU,L=(40+r()*90)*p,w=5+r()*9,x=200+(r()-.5)*50+shake,y=200+(r()-.5)*50,cl=v3Colors(E,col,h+k);
+ v3Blade(c,x,y,L,w,an+(k%2?-.16:.16),(r()-.5)*30,cl);
+ v3Ribbon(c,[[x,y],[x+Math.cos(an)*L*.4,y+Math.sin(an)*L*.4],[x-Math.sin(an)*w*1.8,y+Math.cos(an)*w*1.8]],E?5:3,'#fff',.65*p)}
+ v3Ribbon(c,[[90,200],[150,190+shake],[183,208],[220,190-shake],[260,207],[310,195]],E?8:5,v3Colors(E,col,h+2),p)};
+/* Teasing — soft droplets pulled into a wobbly, elastic chain. */
+X.tease=(c,a,I,E,col,e,T,S)=>{const r=rng(e.seed),h=r()*8|0,p=ez(a/1.2),ly=S.G.ly;
+ const pts=[];for(let k=0;k<=20;k++){const t=k/20;pts.push([200+(t-.5)*210*p,200+Math.sin(t*TAU*1.4+a*2)*26*p+ly*22*t])}
+ v3Ribbon(c,pts,E?8:5,v3Colors(E,col,h),.8);
+ for(let k=0;k<8;k++){const t=(k+.5)/8,x=200+(t-.5)*210*p,y=200+Math.sin(t*TAU*1.4+a*2)*26*p+ly*22*t,rr=(5+r()*13)*p;
+ v3Dot(c,x,y,rr,v3Colors(E,col,h+k));if(!E){v3Dot(c,x-rr*.25,y-rr*.28,rr*.3,'#fff')}}
+ v3Orbit(c,200,200,35+20*Math.sin(a*2),-.8,1.1,v3Colors(E,col,h+3),E?6:3)};
+/* Indirectness — a controlled fan of tapered diagonal strokes. */
+X.indirect=(c,a,I,E,col,e)=>{const r=rng(e.seed),h=r()*8|0,p=ez(a/1.1),an=Math.atan2(e.dy,e.dx),ox=200-Math.cos(an)*145,oy=200-Math.sin(an)*145;
+ for(let k=-4;k<=4;k++){const bend=(r()-.5)*70,angle=an+k*.095,L=(190+r()*90)*p,w=(E?5:3)+(2-Math.abs(k)*.3);
+ v3Ribbon(c,Array.from({length:18},(_,j)=>{const t=j/17;return[ox+Math.cos(angle)*L*t-Math.sin(angle)*bend*Math.sin(t*Math.PI),oy+Math.sin(angle)*L*t+Math.cos(angle)*bend*Math.sin(t*Math.PI)]}),w,v3Colors(E,col,h+k),.95)}
+ for(let k=0;k<22;k++){const t=r()*p,off=(r()-.5)*105;v3Dot(c,ox+Math.cos(an)*t*280-Math.sin(an)*off,oy+Math.sin(an)*t*280+Math.cos(an)*off,1.5+r()*3,v3Colors(E,col,h+k))}};
+/* Retreat — nested open contours recede into a quiet central void. */
+X.retreat=(c,a,I,E,col,e,T)=>{const r=rng(e.seed),h=r()*8|0,p=ez(a/1.3),fade=1-ez(Math.max(0,a-1)/1.5);
+ for(let k=0;k<5;k++){const rr=(110-k*17)*p,off=(k-2)*10*p,pts=[];for(let j=0;j<=48;j++){const t=j/48,an=-1.1+t*4.4,rad=rr*(.75+.25*Math.sin(t*TAU+k));pts.push([200+Math.cos(an)*rad+off,200+Math.sin(an)*rad*.68])}
+ v3Ribbon(c,pts,E?6:3,v3Colors(E,col,h+k),fade)}
+ for(let k=0;k<6;k++){const an=k*TAU/6+a*.2,rr=(25+k*5)*p;v3Dot(c,200+Math.cos(an)*rr,200+Math.sin(an)*rr*.7,3*p,v3Colors(E,col,h+k))}};
+/* Disagreement — two incompatible loops overlap into a lively knot. */
+X.disagree=(c,a,I,E,col,e,T)=>{const r=rng(e.seed),h=r()*8|0,p=ez(a/1.4);
+ for(let k=0;k<3;k++){const pts=[];for(let j=0;j<=64;j++){const t=j/64*TAU*1.7+a*.6,rr=(42+k*22)*p*(.8+.2*Math.sin(t*3+k));pts.push([200+Math.cos(t+k*2.1)*rr,200+Math.sin(t*1.13+k*2.4)*rr*.78])}
+ v3Ribbon(c,pts,E?7:4,v3Colors(E,col,h+k),.85)}
+ for(let k=0;k<6;k++){const an=k*TAU/6,rr=72*p;v3Blade(c,200+Math.cos(an)*rr*.5,200+Math.sin(an)*rr*.5,28*p,4*p,an+.8,10*p,v3Colors(E,col,h+k))}};
+/* Approval — a centered pulse with orbiting, settling beads. */
+X.approve=(c,a,I,E,col,e,T)=>{const r=rng(e.seed),h=r()*8|0,p=ez(a/.7),phase=T/60;
+ for(let k=0;k<3;k++){const rr=(32+k*22)*p;v3Orbit(c,200,200,rr,phase*.25+k*.7,phase*.25+k*.7+TAU*.82,v3Colors(E,col,h+k),E?7:4)}
+ v3Dot(c,200,200,30*p,v3Colors(E,col,h+3));v3Dot(c,200,200,13*p,E?'#fff':'#f8f2ff');
+ for(let k=0;k<7;k++){const an=phase*.18+k*TAU/7,rr=(68+Math.sin(phase+k)*8)*p;v3Dot(c,200+Math.cos(an)*rr,200+Math.sin(an)*rr*.72,4+(k%2)*2,v3Colors(E,col,h+k))}
+ if(a>.6){const q=(a-.6)%1;v3Orbit(c,200,200,88+q*40,-1.1,1.1,v3Colors(E,col,h+1),E?5:3)}};
+/* Celebration — two interwoven ribbons form a kinetic, shared halo. */
+X.celebrate=(c,a,I,E,col,e,T)=>{const r=rng(e.seed),h=r()*8|0,p=ez(a*.45),fade=1-ez(Math.max(0,(T-e.last)/60)/1.6);
+ for(let k=0;k<8;k++){const pts=[];for(let j=0;j<=64;j++){const t=j/64*TAU*1.5+a*.8+k*.03,rr=(48+k*5)*p;pts.push([200+Math.cos(t)*rr,200+Math.sin(t*1.28+k*.7)*rr*.72])}
+ v3Ribbon(c,pts,E?6:3.5,v3Colors(E,col,h+k),fade)}
+ for(let k=0;k<10;k++){const an=a*.8+k*TAU/10,rr=92*p;v3Dot(c,200+Math.cos(an)*rr,200+Math.sin(an)*rr*.7,3+(k%3),v3Colors(E,col,h+k))}};
 function glyph(c,k){if(k<4){c.rotate(k*1.5708);c.moveTo(0,-30);c.lineTo(26,0);c.lineTo(10,0);c.lineTo(10,28);c.lineTo(-10,28);c.lineTo(-10,0);c.lineTo(-26,0);c.closePath()}else if(k===4)c.arc(0,0,22,0,TAU);else{[[-22,-12],[-12,-22],[0,-10],[12,-22],[22,-12],[10,0],[22,12],[12,22],[0,10],[-12,22],[-22,12],[-10,0]].forEach((p,i)=>c[i?'lineTo':'moveTo'](p[0],p[1]));c.closePath()}}
 function drawEmo(c,S,T,E){const e=S.emo,I=.3+.7*S.i,col=i=>E?THREAD[((i|0)%8+8)%8]:emotionGradient(c,i);
  if(e&&e.type==='init'&&T<e.until)for(let l=0;l<4;l++){c.save();c.translate(W/2+(l-1.5)*230,H-100);c.scale(2,2);c.rotate([-1.5708,3.1416,0,1.5708][l]);c.strokeStyle='rgba(255,255,255,.4)';c.lineWidth=E?5:3;c.beginPath();glyph(c,0);c.stroke();c.restore()}
