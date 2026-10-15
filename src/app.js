@@ -170,9 +170,11 @@ function draw(ms){
   }
   function ribbon(x,y,s,hue,seed,age,alpha){
     ctx.save();ctx.globalAlpha=alpha;ctx.lineCap='round';ctx.lineJoin='round';
+    const reveal=Math.min(1,Math.max(.035,age/.72));
     for(let pass=0;pass<5;pass++){
       ctx.beginPath();
-      for(let k=0;k<=80;k++){
+      const steps=Math.max(2,Math.floor(80*reveal));
+      for(let k=0;k<=steps;k++){
         const u=k/80,xx=x+(u-.5)*s*2;
         const yy=y+Math.sin(u* Math.PI*(1.2+(seed%4)*.3)+seed+age*.5)*s*.22+
           Math.sin(u*9+seed)*s*.045+(pass-2)*s*.018;
@@ -249,7 +251,12 @@ function draw(ms){
       scribble(0,0,s*.8,hue2,seed+5,age,fade*.7);
     }else if(g.emotion==='RIGHT_DISAGREEMENT'){
       for(let j=0;j<2;j++){ctx.beginPath();ctx.moveTo(-s*.34,j?s*.22:-s*.22);ctx.lineTo(0,j?-s*.16:s*.16);ctx.lineTo(s*.34,j?s*.22:-s*.22);ctx.strokeStyle=color((hue+j*45)%360,.92,67);ctx.lineWidth=3;ctx.stroke();}
-      for(let j=0;j<7;j++)bloom((Math.random()-.5)*s,(Math.random()-.5)*s*.65,s*.045,hue+j*31,fade*.8);
+      // Stable seed-based fragments: keep the composition still between frames.
+      for(let j=0;j<7;j++){
+        const px=Math.sin(seed*17+j*12.9898)*s*.5;
+        const py=Math.cos(seed*23+j*7.233)*s*.325;
+        bloom(px,py,s*(.028+(j%3)*.009),hue+j*31,fade*.8);
+      }
       ribbon(0,s*.32,s*.8,hue2,seed+6,age,fade*.6);
     }else if(g.emotion==='RIGHT_APPROVAL'){
       for(let j=0;j<3;j++){ctx.beginPath();ctx.arc(0,Math.sin(age*1.8+j)*s*.07,s*(.3+j*.19),Math.PI*1.08,Math.PI*1.92);ctx.strokeStyle=color((hue+j*28)%360,.78,69);ctx.lineWidth=2;ctx.stroke();}
