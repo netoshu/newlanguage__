@@ -16,7 +16,7 @@ summary{cursor:pointer}td{padding:1px 10px 1px 0;color:var(--mut)}td:first-child
 <canvas id="c"></canvas>
 <div id="bar"><button id="bRec">● Record</button><button id="bPlay">▶ Replay</button><button id="bRoll">Re-roll seed</button>
 <select id="sLook"><option value="">Look: as performed</option><option value="gradient">Force gradient</option><option value="embroidery">Force embroidery</option></select>
-<button id="bJson">Copy log</button><button id="bCsv">Copy AE CSV</button><button id="bRet" class="on">Reticle</button><span id="st"></span></div>
+<button id="bJson">Copy log</button><button id="bCsv">Copy AE CSV</button><button id="bAe">AE JSX</button><button id="bVid">🎬 Video</button><button id="bRet" class="on">Reticle</button><span id="st"></span></div>
 <details open><summary>Controls (gamepad or keyboard)</summary><table>
 <tr><td>Left stick / WASD</td><td>move emitter (inertia)</td></tr>
 <tr><td>A / J</td><td>tap 1-2-3×: chips → puffs → burst</td></tr>
@@ -32,8 +32,9 @@ summary{cursor:pointer}td{padding:1px 10px 1px 0;color:var(--mut)}td:first-child
 <tr><td>View / V</td><td>texture amount</td></tr>
 <tr><td>Emotions (left stick / WASD)</td><td></td></tr>
 <tr><td>rotate CCW</td><td>excitement</td></tr>
-<tr><td>slow / fast left-right</td><td>taunting / annoyance</td></tr>
-<tr><td>up-down</td><td>teasing</td></tr>
+<tr><td>rapid aggressive left↔right flicks</td><td>annoyance (jagged spikes)</td></tr>
+<tr><td>medium / slow left↔right sweeps</td><td>taunt (curling tendrils)</td></tr>
+<tr><td>up↔down flicks</td><td>tease (living metaballs)</td></tr>
 <tr><td>hold diagonal</td><td>indirectness</td></tr>
 <tr><td>hold up / down</td><td>initiative / retreat</td></tr>
 <tr><td>right stick left-right</td><td>disagreement</td></tr>
@@ -43,7 +44,7 @@ summary{cursor:pointer}td{padding:1px 10px 1px 0;color:var(--mut)}td:first-child
 const W=1920,H=1080,C=16,IDS=['A','B','X','Y','DU','DL','DR','MENU','VIEW','L3'],BT=['A','B','X','Y','LB','RB','LT','RT','VIEW','MENU','L3','R3','DU','DD','DL','DR'];
 const hs=(a,b,c)=>{let h=Math.imul(a|0,374761393)^Math.imul(b|0,668265263)^Math.imul(c|0,2147483647);h=Math.imul(h^h>>>13,1274126177);return(h^h>>>16)>>>0};
 const rng=s=>()=>{s|=0;s=s+0x6D2B79F5|0;let t=Math.imul(s^s>>>15,1|s);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296};
-const RAMPS={hot:['#ff1f8e','#7b2cff','#ff9aea'],cool:['#1747ff','#18e0ff','#b8ffe6'],acid:['#c8ff2e','#18e8c0','#f4ffd0']},RK=Object.keys(RAMPS);
+const RAMPS={hot:['#ff3d8b','#ff9a3d','#ffe86b'],cool:['#35e6ff','#7b5cff','#ff4fd8'],acid:['#c6ff3d','#19d6b0','#2f6bff']},RK=Object.keys(RAMPS);
 const THREAD=['#e8262d','#2a5bff','#ffd91a','#ff8a1f','#2fd45a','#ff8fb8','#19d3e6','#ffffff'];
 /* ---------- SIM (pure, fixed 60Hz, seeded) ---------- */
 const newSim=seed=>({seed,tick:0,look:'gradient',lookT:-999,dim:'2d',tex:.5,trail:false,em:{x:960,y:640,vx:0,vy:0},hist:[],gs:[],rip:[],id:0,ev:0,combo:0,comboT:-99,i:0,rumble:[],row:null,emo:null,tl:[],G:{a:null,av:0,fx:[],fxs:0,fy:[],fys:0,hD:0,hU:0,hB:0,lx:0,ly:0}});
@@ -113,9 +114,9 @@ function ePart(c,g,p,k,x,y,s,t,L,ax,ay,tex){const col=THREAD[g.pal[k%3]],vis=(a,
   if(hi){c.strokeStyle='#fff';c.beginPath();stitch(c,gx-1,gy,'+');c.stroke()}}
 }
 function render(S,live,showRet){const c=ctx,T=S.look==='embroidery'?Math.floor(S.tick/5)*5:S.tick,emb=S.look==='embroidery';
- c.setTransform(1,0,0,1,0,0);c.fillStyle=emb?'#0a0a0c':'#02030c';c.fillRect(0,0,cv.width,cv.height);c.setTransform(sc,0,0,sc,ox0,oy0);
+ c.setTransform(1,0,0,1,0,0);c.fillStyle=emb?'#0a0a0c':'#08060f';c.fillRect(0,0,cv.width,cv.height);c.setTransform(sc,0,0,sc,ox0,oy0);
  c.save();c.beginPath();c.rect(0,0,W,H);c.clip();
- if(!emb){const bg=c.createRadialGradient(W/2,H*.55,50,W/2,H*.55,H);bg.addColorStop(0,'#0b1440');bg.addColorStop(1,'#02030c');c.fillStyle=bg;c.fillRect(0,0,W,H)}else{c.globalAlpha=Math.min(1,S.tex*1.4);c.drawImage(fab,0,0);c.globalAlpha=1}
+ if(!emb){const bg=c.createRadialGradient(W/2,H*.55,50,W/2,H*.55,H);bg.addColorStop(0,'#1d1233');bg.addColorStop(1,'#08060f');c.fillStyle=bg;c.fillRect(0,0,W,H)}else{c.globalAlpha=Math.min(1,S.tex*1.4);c.drawImage(fab,0,0);c.globalAlpha=1}
  if(S.dim==='3d'){c.strokeStyle=emb?'#ffffff40':'#7b5cff90';c.lineWidth=1.5;c.beginPath();for(let k=-12;k<=12;k++){c.moveTo(W/2,HZ);c.lineTo(W/2+k*220,H)}for(let k=1;k<=10;k++){const y=HZ+(H-HZ)*(k/10)**2;c.moveTo(0,y);c.lineTo(W,y)}c.stroke()}
  if(S.trail&&S.hist.length>1){c.lineWidth=emb?6:10;c.lineCap='round';for(let k=1;k<S.hist.length;k++){const a=k/S.hist.length,[x,y]=S.hist[k],[x0,y0]=S.hist[k-1];c.globalAlpha=a*.6;c.strokeStyle=emb?THREAD[k%8]:RAMPS.cool[k%3];c.beginPath();if(emb){c.rect(Math.floor(x/C)*C,Math.floor(y/C)*C,C,C);c.fillStyle=c.strokeStyle;c.fill()}else{c.moveTo(x0,y0);c.lineTo(x,y);c.stroke()}}c.globalAlpha=1}
  emoLayer(c,S,T,emb);
@@ -124,12 +125,11 @@ function render(S,live,showRet){const c=ctx,T=S.look==='embroidery'?Math.floor(S
    c.globalAlpha=.8;c.lineWidth=emb?3:9;c.lineCap='round';c.strokeStyle=emb?THREAD[g.pal[0]]:R[1];c.stroke();c.globalAlpha=1}
   eachPart(S,g,T,(...a)=>{if(emb){c.globalAlpha=1;ePart(c,g,...a,S.tex)}else gPart(c,g,...a,S.tex)});c.globalAlpha=1}
  for(const q of S.rip)for(let k=0;k<q.n;k++){const t=(T-q.t0)/60-k*.18;if(t<0||t>2.2)continue;const f=420*(1+.3*q.i)*t,al=Math.exp(-t/.9);c.globalAlpha=al*.85;
-  if(!emb){c.strokeStyle=`hsl(${[215,190,330,300,75,160][k%6]},100%,62%)`;c.lineWidth=6;c.beginPath();c.arc(q.x,q.y,f,0,7);c.stroke()}
+  if(!emb){c.strokeStyle=`hsl(${(f*.5+k*40+T*2)%360},90%,65%)`;c.lineWidth=6;c.beginPath();c.arc(q.x,q.y,f,0,7);c.stroke()}
   else{const n=Math.round(f/C),cx=Math.floor(q.x/C),cy=Math.floor(q.y/C);c.strokeStyle=THREAD[(k*3+1)%8];c.lineWidth=3;c.beginPath();for(let i=-n;i<=n;i+=1){if(i%2)continue;stitch(c,cx+i,cy-n,'x');stitch(c,cx+i,cy+n,'x');stitch(c,cx-n,cy+i,'x');stitch(c,cx+n,cy+i,'x')}c.stroke()}}
  c.globalAlpha=1;
  if(showRet&&live){const e=S.em;c.strokeStyle='#ffffff90';c.lineWidth=1.5;c.beginPath();c.arc(e.x,e.y,14,0,7);c.moveTo(e.x-24,e.y);c.lineTo(e.x+24,e.y);c.moveTo(e.x,e.y-24);c.lineTo(e.x,e.y+24);c.stroke()}
  c.restore();
- if(!emb)lumin(c,S.tick);
  const u=(S.tick-S.lookT)/15;if(u>=0&&u<1){const b=Math.max(1,Math.round(28*(1-u))),w=Math.max(1,cv.width/b|0),h=Math.max(1,cv.height/b|0);tmp.width=w;tmp.height=h;const t2=tmp.getContext('2d');t2.drawImage(cv,0,0,w,h);c.setTransform(1,0,0,1,0,0);c.imageSmoothingEnabled=false;c.drawImage(tmp,0,0,cv.width,cv.height);c.imageSmoothingEnabled=true}}
 /* ---------- EMOTIONS (from sketch sheet) ---------- */
 function emoStep(S,lx,ly){const G=S.G,T=S.tick;let av=G.av*.85;G.lx=lx;G.ly=ly;
@@ -161,23 +161,176 @@ X.excite=(c,a,I,E,col,e,T)=>{const r=rng(e.seed),n=6+(I*6|0),fr=r()<.5,h=r()*8|0
  const w=ez((a-.5)/.4);if(w>0){const R=64*w;c.fillStyle='#fff';c.strokeStyle=E?THREAD[1]:'#111';c.lineWidth=lw(6);c.beginPath();c.arc(200,200,R,0,TAU);c.fill();c.stroke();c.lineWidth=lw(2);for(let i=0;i<28;i++){const t=i/28*TAU+tt*.6;c.beginPath();c.moveTo(200,200);c.lineTo(200+Math.cos(t)*R,200+Math.sin(t)*R);c.stroke()}}
  if(fr)lines()};
 // Annoyance: jagged black / white / blue splats on red
-X.annoy=(c,a,I,E,col,e,T)=>{const r=rng(e.seed),jr=rng(hs(e.seed,T,1)),n=4+(I*3|0),dk=E?THREAD[0]:'#111',cs=[dk,'#fff',E?THREAD[1]:'#4b4bb0',dk];
- for(let i=0;i<n;i++){const x=200+(r()-.5)*240,y=200+(r()-.5)*240,R=50+r()*50,k=10+(r()*8|0),f=cs[i%4],s=eb((a-i*.12)/.25),j=2+I*6,ph=r()*9;if(s<=0)continue;
-  spike(c,x+(jr()-.5)*j,y+(jr()-.5)*j,R*s,k,ph,f);if(f===dk)spike(c,x,y,R*s*.45,k,ph+.2,'#fff')}};
-// Taunting: symmetrical curling tendrils that draw themselves
-X.taunt=(c,a,I,E,col,e,T)=>{const r=rng(e.seed),p=ez(a/1.4),tt=T/60,h=r()*8|0;
- for(let i=0;i<5;i++){const b=-1.2+i*.6+r()*.3,cv=1.5+r()*2.5,len=90+r()*70,ph=r()*6;
-  for(const m of[1,-1]){c.strokeStyle=col(h+i,70);c.lineWidth=E?9:8-i*.6;c.beginPath();
-   for(let t=0;t<=p;t+=.02){const an=b+Math.sin(t*cv*3+ph+tt*1.5)*.9+t*cv*1.5,rr=t*len*(1+I*.5);c[t?'lineTo':'moveTo'](200+m*Math.cos(an)*rr*(1+.3*Math.sin(tt*2.2)),180+Math.sin(an)*rr)}c.stroke()}}};
+X.annoy=(c,a,I,E,col,e,T)=>{
+ const r=rng(e.seed),tt=T/60,h=r()*8|0;
+ const n=5+(I*3|0),layers=[];
+ // Reference-led palette: jagged black/white/blue splats against the red field.
+ const ink=E?THREAD[0]:'#101018',blue=E?THREAD[1]:'#484bb5';
+ for(let i=0;i<n;i++){
+  const an=r()*TAU,dist=22+r()*102;
+  layers.push({x:200+Math.cos(an)*dist,y:200+Math.sin(an)*dist,
+   R:38+r()*42,k:9+(r()*7|0),ph:r()*TAU,rot:r()*TAU,
+   colour:[ink,'#fff',blue,ink,blue][i%5],delay:i*.075,
+   seed:r(),sx:.72+r()*.62,sy:.7+r()*.65,flip:r()<.5?-1:1});
+ }
+ const jagged=(x,y,R,k,phase,seed,fill,rot,sx,sy)=>{
+  c.beginPath();
+  for(let j=0;j<k*2;j++){
+   const ang=rot+j/k*Math.PI+phase;
+   const long=(j%2===0),noise=.72+.48*rng(hs(e.seed,seed,j))();
+   const rad=R*(long?1.02: .34)*noise;
+   const px=x+Math.cos(ang)*rad*sx,py=y+Math.sin(ang)*rad*sy;
+   c[j?'lineTo':'moveTo'](px,py);
+  }
+  c.closePath();c.fillStyle=fill;c.fill();
+ };
+ c.save();
+ layers.forEach((p,i)=>{
+  const local=Math.max(0,a-p.delay),appear=ez(local/.22);
+  if(appear<=0)return;
+  const pulse=.86+.14*Math.sin(tt*9+p.ph),shake=1.8+I*4.2;
+  const x=p.x+Math.sin(tt*13+p.ph)*shake;
+  const y=p.y+Math.cos(tt*11+p.ph*1.3)*shake*.8;
+  const size=p.R*appear*pulse*(.93+.07*Math.sin(tt*6+i));
+  const rot=p.rot+Math.sin(tt*8+p.ph)*(.025+I*.035);
+  c.save();c.translate(x,y);c.rotate(rot);c.scale(p.sx*p.flip,p.sy);
+  // Offset dark underprint gives the splat a rough, printed silhouette.
+  jagged(3,4,size,p.k,p.ph,p.seed,ink,0,1,1);
+  const face=p.colour===ink?ink:p.colour;
+  jagged(0,0,size,p.k,p.ph+.09,p.seed+7,face,0,1,1);
+  // Smaller inset splat: especially important on dark shapes, as in the reference.
+  if(face===ink){
+   jagged(-size*.025,-size*.015,size*(.32+.06*Math.sin(tt*12+p.ph)),Math.max(6,p.k-2),p.ph+.18,p.seed+17,'#fff',0,.92,.9);
+  }else if(face===blue){
+   jagged(size*.02,-size*.015,size*.22,Math.max(5,p.k-3),p.ph+.24,p.seed+23,ink,0,.9,.82);
+  }
+  // A few short angular cuts keep the cybersigil character, without replacing the splat.
+  c.lineJoin='miter';c.lineCap='square';c.lineWidth=E?1.5:1.2+I*.7;
+  for(let j=0;j<2+(i%3);j++){
+   const side=j%2?-1:1,xx=(rng(hs(e.seed,i,j+50))()-.5)*size*.8;
+   c.beginPath();c.moveTo(xx,-side*size*.12);
+   c.lineTo(xx+size*(.08+rng(hs(e.seed,i,j+70))()*.13),side*size*(.12+rng(hs(e.seed,i,j+90))()*.18));
+   c.strokeStyle=face===ink?'#fff':ink;c.stroke();
+  }
+  c.restore();
+ });
+ // Restless short shards flick around the splats rather than forming a neat radial wheel.
+ const shards=7+(I*8|0);
+ for(let i=0;i<shards;i++){
+  const ang=i/shards*TAU+Math.sin(tt*3.8+i*1.7)*.18;
+  const d=35+(i%4)*17+((a*42+i*19)%31),len=8+I*17+(i%3)*4;
+  const x=200+Math.cos(ang)*d,y=200+Math.sin(ang)*d;
+  c.globalAlpha=.45+.45*Math.sin(tt*10+i*2.1)**2;
+  c.strokeStyle=i%3===0?'#fff':i%3===1?blue:ink;c.lineWidth=E?2:1.4+I;
+  c.beginPath();c.moveTo(x,y);c.lineTo(x+Math.cos(ang+.12)*len,y+Math.sin(ang+.12)*len);c.stroke();
+ }
+ c.globalAlpha=1;c.restore();
+};
 // Teasing: black drips land and smear with the stick
-X.tease=(c,a,I,E,col,e,T,S)=>{const r=rng(e.seed),tt=T/60,pts=[],dk=E?THREAD[0]:'#0b0b0b',ly=S.G.ly;
- for(let i=0;i<8;i++)pts.push([200+(r()-.5)*220,200+(r()-.5)*200,22+r()*(40+30*I),r()*6]);
- c.fillStyle=c.strokeStyle=dk;let pv=null;
- if(a<.5){c.beginPath();c.arc(200,ez(a/.5)*160+20,12,0,TAU);c.fill()}
- pts.forEach((p,i)=>{const s=ez((a-.5-i*.25)/.4);if(s<=0)return;const x=p[0]+Math.sin(tt*2+p[3])*8,y=p[1]+ly*25*i/8+Math.cos(tt*2+p[3])*8,R=p[2]*s;
-  c.fillStyle=dk;c.beginPath();c.arc(x,y,R,0,TAU);c.fill();
-  if(pv){c.lineWidth=Math.min(R,pv[2])*1.1;c.beginPath();c.moveTo(pv[0],pv[1]);c.lineTo(x,y);c.stroke()}
-  if(!E){c.fillStyle='#7a7a7a';c.beginPath();c.arc(x+R*.2,y-R*.2,R*.25,0,TAU);c.fill()}pv=[x,y,R]})};
+// Teasing: Smooth, rounded organic metaball blob with fluid spreading child lobes and pinched curved necks
+// Teasing: single continuous organic metaball contour with smooth concave pinched necks
+X.tease = (c, a, I, E, col, e, T, S) => {
+ const r = rng(e.seed), tt = T / 60, ly = (S && S.G && S.G.ly) || 0;
+ const h = r() * 8 | 0, p = ez(a / 0.6);
+ if (p <= 0) return;
+
+ c.save();
+ c.translate(200, 200);
+ c.scale(1 + ly * 0.25, 1 - ly * 0.25);
+
+ const baseR = (38 + 14 * I) * p;
+ const inkCol = E ? THREAD[0] : col(h);
+
+ // Explicit lobes with fixed directions and staggered activation.
+ const lobes = [
+  { ang: 0.15, dist: 72, r: 22, delay: 0.05 },
+  { ang: 1.95, dist: 82, r: 26, delay: 0.15 },
+  { ang: 3.90, dist: 68, r: 18, delay: 0.25 },
+  { ang: 5.30, dist: 85, r: 21, delay: 0.35 }
+ ];
+
+ // Sample one full perimeter and smooth it into a single closed contour.
+ c.beginPath();
+ const totalSteps = 128;
+ const pts = [];
+
+ for (let i = 0; i < totalSteps; i++) {
+  const theta = (i / totalSteps) * TAU;
+  let maxInfluence = 0;
+  let targetLobe = null;
+
+  for (const l of lobes) {
+   const prog = ez((a - l.delay) / 0.4);
+   if (prog <= 0) continue;
+
+   let diff = theta - l.ang;
+   while (diff > Math.PI) diff -= TAU;
+   while (diff < -Math.PI) diff += TAU;
+
+   const angularWeight = Math.max(0, 1 - Math.abs(diff) * 1.3);
+   const influence = angularWeight * prog;
+   if (influence > maxInfluence) {
+    maxInfluence = influence;
+    targetLobe = l;
+   }
+  }
+
+  let px, py;
+  if (targetLobe && maxInfluence > 0) {
+   const currDist = targetLobe.dist * maxInfluence * (1 + 0.25 * I);
+   const currR = targetLobe.r * maxInfluence;
+   const lxPos = Math.cos(targetLobe.ang) * currDist;
+   const lyPos = Math.sin(targetLobe.ang) * currDist + ly * 12;
+   px = lxPos + Math.cos(theta) * currR;
+   py = lyPos + Math.sin(theta) * currR;
+  } else {
+   const coreVar = baseR * (1 + 0.06 * Math.sin(theta * 4 + tt));
+   px = Math.cos(theta) * coreVar;
+   py = Math.sin(theta) * coreVar;
+  }
+  pts.push([px, py]);
+ }
+
+ c.moveTo(
+  (pts[0][0] + pts[totalSteps - 1][0]) / 2,
+  (pts[0][1] + pts[totalSteps - 1][1]) / 2
+ );
+ for (let i = 0; i < totalSteps; i++) {
+  const curr = pts[i];
+  const next = pts[(i + 1) % totalSteps];
+  const mx = (curr[0] + next[0]) / 2;
+  const my = (curr[1] + next[1]) / 2;
+  c.quadraticCurveTo(curr[0], curr[1], mx, my);
+ }
+ c.closePath();
+
+ if (!E) {
+  const gr = c.createRadialGradient(-baseR * 0.3, -baseR * 0.3, 0, 0, 0, baseR * 1.6);
+  gr.addColorStop(0, '#ffffff');
+  gr.addColorStop(0.35, col(h));
+  gr.addColorStop(1, col(h + 2));
+  c.fillStyle = gr;
+  c.shadowColor = col(h);
+  c.shadowBlur = 18;
+ } else {
+  c.fillStyle = inkCol;
+ }
+ c.fill();
+ c.shadowBlur = 0;
+
+ c.strokeStyle = E ? THREAD[7] : 'rgba(255,255,255,0.45)';
+ c.lineWidth = E ? 3 : 1.5;
+ c.stroke();
+
+ // Glossy inner accent highlight.
+ c.beginPath();
+ c.arc(-baseR * 0.15, -baseR * 0.15, baseR * 0.25, 0, TAU);
+ c.fillStyle = E ? THREAD[7] : 'rgba(255,255,255,0.35)';
+ c.fill();
+
+ c.restore();
+};
+
 // Indirectness: diagonal paint splash leaving particles
 X.indirect=(c,a,I,E,col,e)=>{const r=rng(e.seed),p=ez(a/.9),h=r()*8|0,dx=e.dx,dy=e.dy,sx=200-dx*190,sy=200-dy*190,qx=200+dx*190,qy=200+dy*190,nx=-dy*.707,ny=dx*.707;
  for(let k=-4;k<=4;k++){const L=.55+r()*.45,o=k*13,q=p*L;c.strokeStyle=col(h+k,Math.abs(k)>2?70:55);c.lineWidth=E?14:16-Math.abs(k)*1.5;c.beginPath();c.moveTo(sx+nx*o,sy+ny*o);c.quadraticCurveTo(200+nx*o*1.8,200+ny*o*1.8,sx+(qx-sx)*q+nx*o,sy+(qy-sy)*q+ny*o);c.stroke()}
@@ -206,18 +359,60 @@ function emoLayer(c,S,T,emb){if(!S.emo&&!S.tl.length)return;
  for(let i=0;i<idx.length;i++){const o=i*4;if(d[o+3]<90){idx[i]=-1;continue}let b=0,bd=1e9;for(let k=0;k<8;k++){const q=TR[k],dd=(d[o]-q[0])**2+(d[o+1]-q[1])**2+(d[o+2]-q[2])**2;if(dd<bd){bd=dd;b=k}}idx[i]=b}
  c.lineWidth=3;c.lineCap='round';for(let k=0;k<8;k++){c.strokeStyle=THREAD[k];c.beginPath();for(let i=0;i<idx.length;i++)if(idx[i]===k)stitch(c,i%n,(i/n)|0,'x');c.stroke()}}
 /* ---------- EMOTIONS v2 (updated sheet: overrides the block above) ---------- */
-const GP=['#1747ff','#18e0ff','#ff1f8e','#1a0f4d','#c8ff2e','#18e8c0','#ff2fd0','#b8ffd6'],EP={celebrate:6,excite:5,annoy:4,taunt:3,tease:3,disagree:3,approve:3,indirect:2,init:2,retreat:2};
+const GP=['#e2f77a','#6a2cc4','#4fb8c8','#222222','#e0564a','#d9d5c8','#2ee89a','#0a4fd0'],EP={celebrate:6,excite:5,annoy:4,taunt:3,tease:3,disagree:3,approve:3,indirect:2,init:2,retreat:2};
 function emoStep(S,lx,ly,rx,ry){const G=S.G,T=S.tick;G.gx=G.gx||[];G.gy=G.gy||[];G.lx=lx;G.ly=ly;
- const rot=(k,x,y)=>{const o=G['a'+k],pv=G['av'+k]||0;let v=pv*.85;if(Math.hypot(x,y)>.5){const a=Math.atan2(y,x);if(o!=null){let d=a-o;if(d>Math.PI)d-=TAU;if(d<-Math.PI)d+=TAU;v=pv+(d*60-pv)*.3}G['a'+k]=a}else G['a'+k]=null;G['av'+k]=v;return v};
- const aL=rot('L',lx,ly),aR=rot('R',rx,ry);
- const fl=(k,v,ok)=>{if(ok&&Math.abs(v)>.35){const s=Math.sign(v);if(G[k+'s']&&s!==G[k+'s'])G[k].push(T);G[k+'s']=s}G[k]=G[k].filter(t=>T-t<72);return G[k]};
- const fx=fl('fx',lx,Math.abs(ly)<.5),fy=fl('fy',ly,Math.abs(lx)<.5),gx=fl('gx',rx,Math.abs(ry)<.5),gy=fl('gy',ry,Math.abs(rx)<.5),st=Math.abs(aL)<1.5;
- const iv=fx.length>1?(fx[fx.length-1]-fx[0])/(fx.length-1):99;
- G.hD=Math.abs(lx)>.45&&Math.abs(ly)>.45&&st?G.hD+1:0;G.hU=ly<-.7&&Math.abs(lx)<.4&&st?G.hU+1:0;G.hB=ly>.7&&Math.abs(lx)<.4&&st?G.hB+1:0;
- const r=aL<-2.5&&aR>2.5?['celebrate',90]:aL<-2.5?['excite',90]:fx.length>=3&&iv<14?['annoy',60]:fx.length>=2&&iv>=14?['taunt',80]:fy.length>=3&&st?['tease',80]:gx.length>=2?['disagree',70]:gy.length>=2?['approve',70]:G.hD>12?['indirect',30]:G.hU>12?['init',30]:G.hB>12?['retreat',30]:null;
+ // Ring buffers for energy + recent peaks
+ G.hx=G.hx||[];G.hy=G.hy||[];G.hx.push(lx);G.hy.push(ly);if(G.hx.length>30){G.hx.shift();G.hy.shift()}
+ const rot=(k,x,y)=>{const o=G['a'+k],pv=G['av'+k]||0;let v=pv*.85;if(Math.hypot(x,y)>.45){const a=Math.atan2(y,x);if(o!=null){let d=a-o;if(d>Math.PI)d-=TAU;if(d<-Math.PI)d+=TAU;v=Math.abs(d)>2?pv*.85:pv+(d*60-pv)*.3}G['a'+k]=a}else G['a'+k]=null;G['av'+k]=v;return v};
+ const aL=rot('L',lx,ly),aR=rot('R',rx,ry);G.rw=Math.max(Math.abs(aL),(G.rw||0)*.97);G.sx=aL<-2.2?(G.sx||0)+1:0;G.sy=aR>2.2?(G.sy||0)+1:0;
+ // Crossing detector – records direction changes past a threshold
+ const fl=(k,v,ok,thr)=>{if(ok&&Math.abs(v)>thr){const s=Math.sign(v);if(G[k+'s']!==s){G[k].push(T);G[k+'s']=s}}G[k]=G[k].filter(t=>T-t<120);return G[k]};
+ // Axis isolation – allow moderate crosstalk so gamepad noise doesn't kill flicks
+ const fx=fl('fx',lx,Math.abs(ly)<.70,.18),fy=fl('fy',ly,Math.abs(lx)<.70,.18);
+ const gx=fl('gx',rx,Math.abs(ry)<.65,.25),gy=fl('gy',ry,Math.abs(rx)<.65,.25);
+ const st=Math.abs(aL)<2.0;
+ const energy=(buf)=>{let e=0;for(let i=1;i<buf.length;i++)e+=Math.abs(buf[i]-buf[i-1]);return e};
+ const xEnergy=energy(G.hx),yEnergy=energy(G.hy);
+ // Clear horizontal flicks when rotating strongly
+ if(G.rw>2.5){fx.length=0;fy.length=0;G.fxs=0;G.fys=0}
+ // Interval between crossings (lower = faster flicks)
+ const iv=fx.length>1?(fx[fx.length-1]-fx[0])/Math.max(1,fx.length-1):99;
+ const iy=fy.length>1?(fy[fy.length-1]-fy[0])/Math.max(1,fy.length-1):99;
+ G.hD=Math.abs(lx)>.38&&Math.abs(ly)>.38&&st?G.hD+1:0;G.hU=ly<-.6&&Math.abs(lx)<.5&&st?G.hU+1:0;G.hB=ly>.6&&Math.abs(lx)<.5&&st?G.hB+1:0;
+
+ /* Clear separation rules:
+    ANNOY  – rapid aggressive left↔right (needs speed + multiple crossings)
+    TAUNT  – slower / medium left↔right sweeps
+    TEASE  – vertical up↔down only
+ */
+ let r0=null;
+ if(G.sx>=3&&G.sy>=3) r0=['celebrate',90];
+ else if(G.sx>=3) r0=['excite',90];
+ else if(fy.length>=2 && st && Math.abs(lx)<.55){          // pure vertical → TEASE
+  r0=['tease',90];
+ }else if(fy.length>=1 && yEnergy>2.0 && st && Math.abs(lx)<.5){
+  r0=['tease',80];
+ }else if(fx.length>=3 && iv<12 && xEnergy>2.6){            // fast triple+ flick → ANNOY
+  r0=['annoy',80];
+ }else if(fx.length>=2 && iv<10 && xEnergy>3.0){            // very fast double flick → ANNOY
+  r0=['annoy',75];
+ }else if(fx.length>=2 && iv>=12){                          // medium/slow multi-sweep → TAUNT
+  r0=['taunt',90];
+ }else if(fx.length>=1 && xEnergy>2.8 && iv<14){            // high-energy single burst only if fast
+  r0=['annoy',65];
+ }else if(gx.length>=2) r0=['disagree',70];
+ else if(gy.length>=2) r0=['approve',70];
+ else if(G.hD>8) r0=['indirect',30];
+ else if(G.hU>8) r0=['init',30];
+ else if(G.hB>8) r0=['retreat',30];
+
+ const NEED={annoy:2,taunt:2,tease:1,disagree:2,approve:2},r1=r0?r0[0]:null;
+ if(r1!==G.cand){G.cn=(G.cn||0)-1;if(G.cn<=0){G.cand=r1;G.cn=0}}else G.cn=Math.min(10,(G.cn||0)+1);
+ const r=r0&&G.cand===r1&&G.cn>=(NEED[r1]||0)?r0:null;
  let e=S.emo;
+ if(e&&e.type==='tease'&&T<=e.until&&fy.length&&fy[fy.length-1]>(e.lf||e.t0)){e.lf=fy[fy.length-1];(e.ev=e.ev||[]).push(e.lf)}
  if(r){if(e&&e.type===r[0]&&T<=e.until){e.until=T+r[1];e.last=T}
-  else if(!e||T>e.until||EP[r[0]]>EP[e.type]||T>e.last+12)e=S.emo={type:r[0],t0:T,last:T,seed:hs(S.seed,++S.ev,11),until:T+r[1],dx:Math.sign(lx)||1,dy:Math.sign(ly)||1}}
+  else if(!e||T>e.until||EP[r[0]]>EP[e.type]||T>e.last+12)e=(S.pv=e&&T<e.until?e:null,S.pe=T+24,S.emo={type:r[0],t0:T,last:T,seed:hs(S.seed,++S.ev,11),until:T+r[1],dx:Math.sign(lx)||1,dy:Math.sign(ly)||1})}
  if(e&&e.type==='init'&&T<e.until&&T-e.last<8&&(T-e.t0)%17===0)S.tl.push({x:hs(e.seed,T,3)%4-1.5,y:-60,k:hs(e.seed,T,4)%6,c:hs(e.seed,T,5)%8});
  for(const t of S.tl)t.y+=(380+300*S.i)/60;S.tl=S.tl.filter(t=>t.y<H+120);
  if(e&&T<e.until&&T%6===0){const a=(T-e.t0)/60,I=.3+.7*S.i,p=(Math.sin(T/20)+1)/2,f=Math.max(.1,1-a/2.5),q=Math.min(1,a/.8),bt=(T/15|0)%2;
@@ -226,21 +421,203 @@ function emoStep(S,lx,ly,rx,ry){const G=S.G,T=S.tick;G.gx=G.gx||[];G.gy=G.gy||[]
 function ht(c,x,y,R,f){c.fillStyle=f;for(let k=1;k<=5;k++){const rr=R*k/5,m=k*7;for(let i=0;i<m;i++){const t=i/m*TAU+k;c.beginPath();c.arc(x+Math.cos(t)*rr,y+Math.sin(t)*rr,R*.11*(1.15-k/6),0,TAU);c.fill()}}}
 function blade(c,x,y,L,w,an,cv,f){const ca=Math.cos(an),sa=Math.sin(an),nx=-sa,ny=ca,mx=x+ca*L*.5+nx*cv,my=y+sa*L*.5+ny*cv;c.fillStyle=f;c.beginPath();c.moveTo(x+nx*w,y+ny*w);c.quadraticCurveTo(mx,my,x+ca*L,y+sa*L);c.quadraticCurveTo(mx-nx*w*1.6,my-ny*w*1.6,x-nx*w,y-ny*w);c.closePath();c.fill()}
 // Excitement: halftone ringed circles pop out, wheel, lines grow from one point in waves; on stop circles pop away, lines fade
-X.excite=(c,a,I,E,col,e,T)=>{const r=rng(e.seed),n=6+(r()*4|0)+(I*5|0),h=r()*8|0,K=[],L=[],tt=T/60,xt=Math.max(0,(T-e.last)/60),pop=1-ez(xt/.35),fd=1-ez(xt/1.2);
- for(let i=0;i<n;i++)K.push([200+(r()-.5)*340,200+(r()-.5)*300,14+r()*34,h+(r()*8|0),h+(r()*8|0),h+(r()*8|0)]);
- for(let i=0;i<12;i++)L.push([r()*TAU,120+r()*180,r()*6,h+(r()*8|0),.5+r()]);
- K.forEach((k,i)=>{const s=eb((a-i*.07)/.35)*pop;if(s<=.02)return;const R=k[2]*s;c.fillStyle=col(k[3]);c.beginPath();c.arc(k[0],k[1],R,0,TAU);c.fill();if(!E)ht(c,k[0],k[1],R*.92,col(k[4]));c.fillStyle='#fff';c.beginPath();c.arc(k[0],k[1],R*.45,0,TAU);c.fill();c.fillStyle=col(k[5]);c.beginPath();c.arc(k[0],k[1],R*.2,0,TAU);c.fill()});
- const w=ez((a-.5)/.4)*pop;if(w>.02){const R=64*w;c.fillStyle='#fff';c.strokeStyle=col(3);c.lineWidth=E?8:5;c.beginPath();c.arc(200,200,R,0,TAU);c.fill();c.stroke();c.lineWidth=E?6:2;for(let i=0;i<28;i++){const t=i/28*TAU+tt*.6;c.beginPath();c.moveTo(200,200);c.lineTo(200+Math.cos(t)*R,200+Math.sin(t)*R);c.stroke()}}
- const q=ez((a-.9)/1.2);if(q>0&&fd>.01){const ga=c.globalAlpha;c.globalAlpha=ga*fd;c.lineWidth=E?7:3;for(const l of L){c.strokeStyle=col(l[3]);c.beginPath();const len=l[1]*q;for(let s=0;s<=len;s+=8){const wv=Math.sin(s*.045*l[4]+l[2]+tt*3)*(10+s*.12);c[s?'lineTo':'moveTo'](200+Math.cos(l[0])*s-Math.sin(l[0])*wv,200+Math.sin(l[0])*s+Math.cos(l[0])*wv)}c.stroke()}c.globalAlpha=ga}};
-// Annoyance: cybersigilism blades, mirrored, overlapping, randomized
-X.annoy=(c,a,I,E,col,e,T)=>{const r=rng(e.seed),jr=rng(hs(e.seed,T,1)),n=7+(r()*4|0)+(I*6|0),h=r()*8|0;
- for(let i=0;i<n;i++){const x=200+(r()-.5)*120,y=200+(r()-.5)*120,an=r()*TAU,L=(70+r()*150)*(.6+I*.6),w=4+r()*14,cv=(r()-.5)*90,f=col(h+(r()*8|0)),s=ez((a-i*.07)/.3),j=1+I*3;
-  if(s>0)for(const m of[1,-1])blade(c,m>0?x:400-x+(jr()-.5)*j,y+(jr()-.5)*j,L*s,w,m>0?an:Math.PI-an,cv*m,f)}};
-// Teasing: one main blob grows, smaller blobs smear out of it in different directions
-X.tease=(c,a,I,E,col,e,T,S)=>{const r=rng(e.seed),tt=T/60,ly=S.G.ly,h=r()*8|0,R0=(55+r()*25+30*I)*ez(a/.7);
- c.fillStyle=c.strokeStyle=col(h);c.beginPath();c.arc(200,200+ly*10,R0,0,TAU);c.fill();
- for(let i=0;i<8;i++){const an=r()*TAU,d=60+r()*110,rr=14+r()*34,s=ez((a-.5-i*.22)/.6);if(s<=0)continue;const x=200+Math.cos(an)*d*s+Math.sin(tt*2+i)*5,y=200+Math.sin(an)*d*s+ly*20*s+Math.cos(tt*2+i)*5;
-  c.fillStyle=c.strokeStyle=col(h+(i%3));c.lineWidth=rr*s*1.3;c.beginPath();c.moveTo(200,200+ly*10);c.lineTo(x,y);c.stroke();c.beginPath();c.arc(x,y,rr*s,0,TAU);c.fill()}};
+X.excite=(c,a,I,E,col,e,T)=>{
+ const r=rng(e.seed),n=9+(r()*5|0)+(I*5|0),h=r()*8|0,K=[],L=[],tt=T/60;
+ const xt=Math.max(0,(T-e.last)/60),release=ez(xt/.18),circleFade=1-ez(xt/.34),lineFade=1-ez(xt/1.45);
+ // Each performance gets its own off-centre launch point, shared with the flowing lines.
+ const originX=72+r()*256,originY=72+r()*256;
+ for(let i=0;i<n;i++){
+  // Random final destinations span the canvas; each circle travels outward as its entrance progresses.
+  const R=12+r()*24, margin=R+8;
+  const x=margin+r()*(400-margin*2), y=margin+r()*(400-margin*2);
+  K.push([x,y,R,h+(r()*8|0),h+(r()*8|0),h+(r()*8|0),r(),r()]);
+ }
+ // A few longer, varied wave paths create a composition that spans the whole frame.
+ for(let i=0;i<19;i++)L.push([r()*TAU,150+r()*330,r()*TAU,h+(r()*8|0),.55+r()*1.15,r()*.8]);
+ // The circles arrive first: each one pops forward with a slight overshoot and a dotted halftone surface.
+ K.forEach((k,i)=>{
+  const entrance=eb((a-i*.055)/.28),pop=1+Math.sin(Math.min(1,entrance)*Math.PI)*.12;
+  const s=entrance*pop*(1+release*.85)*circleFade;
+  if(s<=.015)return;
+  // Travel grows with the action: circles pop near the launch point, then drift progressively outward.
+  const travel=ez((a-i*.055)/.88);
+  const R=k[2]*s,x=originX+(k[0]-originX)*travel,y=originY+(k[1]-originY)*travel;
+  c.save();c.globalAlpha*=Math.min(1,circleFade*1.3);
+  const gr=c.createRadialGradient(x-R*.32,y-R*.4,R*.03,x,y,R*1.18);
+  gr.addColorStop(0,'#ffffff');gr.addColorStop(.16,col(k[4]));gr.addColorStop(.53,col(k[3]));gr.addColorStop(1,col(k[5]));
+  // Soft bloom under the form, then a feathered radial fill rather than a crisp sticker-like edge.
+  c.save();c.shadowColor=col(k[4]);c.shadowBlur=E?R*.38:R*.62;
+  c.fillStyle=gr;c.beginPath();c.arc(x,y,R*.985,0,TAU);c.fill();c.restore();
+  if(!E){c.save();c.globalAlpha*=.34;ht(c,x,y,R*.86,col(k[4]));c.restore();}
+  // A very restrained rim keeps the form legible without outlining it sharply.
+  c.strokeStyle=E?col(k[5]):'rgba(220,245,255,.18)';c.lineWidth=E?2:Math.max(.7,R*.018);
+  c.beginPath();c.arc(x,y,R*.975,0,TAU);c.stroke();
+  const hi=c.createRadialGradient(x-R*.18,y-R*.2,0,x-R*.08,y-R*.08,R*.66);
+  hi.addColorStop(0,'rgba(255,255,255,.48)');hi.addColorStop(.38,'rgba(255,255,255,.12)');hi.addColorStop(1,'rgba(255,255,255,0)');
+  c.fillStyle=hi;c.beginPath();c.arc(x,y,R*.94,0,TAU);c.fill();
+  c.restore();
+ });
+ // A central ringed wheel punctuates the circle phase before the lines take over.
+ const wheel=ez((a-.48)/.34)*(1-ez(xt/.26));
+ if(wheel>.015){
+  const wx=originX,wy=originY,R=48*wheel*(1+release*.3);
+  c.save();c.globalAlpha*=1-ez(xt/.32);
+  c.shadowColor=col(h+3);c.shadowBlur=R*.6;
+  const wg=c.createRadialGradient(wx,wy,R*.12,wx,wy,R);
+  wg.addColorStop(0,'rgba(255,255,255,.10)');wg.addColorStop(.72,col(h+1));wg.addColorStop(1,'rgba(255,255,255,0)');
+  c.fillStyle=wg;c.beginPath();c.arc(wx,wy,R,0,TAU);c.fill();c.shadowBlur=0;
+  c.strokeStyle=col(h+3);c.globalAlpha*=.58;c.lineWidth=E?5:3;c.beginPath();c.arc(wx,wy,R*.96,0,TAU);c.stroke();
+  c.globalAlpha*=1.4;c.strokeStyle=col(h+1);c.lineWidth=E?3:1.5;
+  for(let i=0;i<30;i++){const t=i/30*TAU+tt*.55;c.beginPath();c.moveTo(wx+Math.cos(t)*R*.13,wy+Math.sin(t)*R*.13);c.lineTo(wx+Math.cos(t)*R,wy+Math.sin(t)*R);c.stroke()}
+  c.fillStyle=col(h+2);c.beginPath();c.arc(wx,wy,R*.16,0,TAU);c.fill();c.restore();
+ }
+ // Lines radiate from the same origin. Each has its own delayed wavefront and undulating path.
+ const linePhase=ez((a-.72)/.7);
+ if(linePhase>.001&&lineFade>.01){
+  c.save();c.globalAlpha*=lineFade;c.lineCap='round';c.lineJoin='round';
+  c.shadowBlur=E?7:11;
+  for(const l of L){
+   const delay=l[5]*.48,progress=ez((a-.78-delay)/.95);
+   if(progress<=.001)continue;
+   const len=l[1]*progress,ang=l[0],amp=7+I*11;
+   c.strokeStyle=col(l[3]);c.globalAlpha*=.88;c.shadowColor=col(l[3]);c.lineWidth=E?5:2.2+I*1.7;c.beginPath();
+   for(let d=0;d<=len;d+=5){
+    const wave=Math.sin(d*.035*l[4]-tt*3+l[2])*amp*(d/Math.max(1,len));
+    const x=originX+Math.cos(ang)*d-Math.sin(ang)*wave;
+    const y=originY+Math.sin(ang)*d+Math.cos(ang)*wave;
+    c[d===0?'moveTo':'lineTo'](x,y);
+   }
+   c.stroke();c.globalAlpha/=.88;
+   // A brighter moving tip makes the wave feel like it is actively travelling.
+   const tipWave=Math.sin(len*.035*l[4]-tt*3+l[2])*amp;
+   const tx=originX+Math.cos(ang)*len-Math.sin(ang)*tipWave,ty=originY+Math.sin(ang)*len+Math.cos(ang)*tipWave;
+   if(!E){c.fillStyle=col(l[3]);c.globalAlpha*=.9;c.beginPath();c.arc(tx,ty,2.2+I*2,0,TAU);c.fill();c.globalAlpha/= .9}
+  }
+  c.restore();
+ }
+};
+// Annoyance: tensile membrane spikes from the two references. They spread across the whole workspace, stab out, twitch in hard steps,
+// and the motion follows the performance: each stick reversal sends a shove across the field, and tempo builds with the flicking
+X.annoy=(c,a,I,E,col,e,T,S)=>{
+ const r=rng(e.seed),tt=T/60,lx=(S&&S.G.lx)||0,held=Math.max(0,(T-e.last)/60),fade=1-ez(held/1.15);
+ const fx=(S&&S.G.fx)||[],sg=(S&&S.G.fxs)||1,ag=Math.min(1,Math.max(0,(fx.length-2)/5)),bd=ez(a/4),qt=Math.floor(tt*(8+12*ag+4*bd)),ja=.6+.9*ag+.4*bd;
+ // Each recent stick reversal is a decaying shove, alternating direction; delay lets it travel across the field
+ const kick=dl=>{let k=0,u=0;for(let q=0;q<fx.length;q++){const age=(T-fx[fx.length-1-q])/60-dl;if(age<0)continue;const w=Math.exp(-age*7);u+=w;k+=w*(q%2?-sg:sg)}return[k,u]};
+ const A=[0,5,2].map(col),B=[7,1].map(col),K=[4,6,1].map(col),pick=L=>L[r()*L.length|0];
+ // Jittered 5x3 grid, shuffled, so pieces cover the full stage (stage spans about x -165..565, y -5..405 in this space)
+ const n=9+(I*4|0),cells=Array.from({length:15},(_,q)=>q);
+ for(let q=14;q>0;q--){const z=r()*(q+1)|0,t=cells[q];cells[q]=cells[z];cells[z]=t}
+ const P=[];
+ for(let i=0;i<n+6;i++){
+  const sl=i>=n,k=sl?2:4+(r()*3|0),t=r(),cl=cells[i%15],
+   px=sl?-140+r()*680:-140+(cl%5+.15+.7*r())*136,py=sl?15+r()*370:15+((cl/5|0)+.15+.7*r())*123;
+  P.push({x:px-200,y:py-200,k,R:sl?90+r()*80:44+r()*46,rot:sl?(r()-.5)*.9+(r()<.5?0:Math.PI):r()*TAU,
+   tr:sl||t<.5?'neon':t<.68?'blue':t<.84?'ink':'line',dl:i*.03,ph:r(),dp:r(),pin:sl?.05+r()*.05:.1+r()*.12,hole:!sl&&r()<.6,
+   J:Array.from({length:k},()=>(r()-.5)*.7),L:Array.from({length:k},(_,j)=>sl?(j?.4+r()*.6:1):.3+r()*r()*1.1+(r()<.25?.7:0)),c:[pick(A),pick(B),pick(K)]})}
+ // Concave-sided star: needle tips joined by arcs pulled hard toward the centre
+ const shape=(p,s,th)=>{const t=[];
+  for(let j=0;j<p.k;j++){const an=p.rot+j*TAU/p.k+p.J[j],L=p.R*p.L[j]*s*(j?1:1+.35*th);t.push([Math.cos(an)*L,Math.sin(an)*L])}
+  c.beginPath();c.moveTo(t[0][0],t[0][1]);
+  for(let j=1;j<=p.k;j++){const am=p.rot+(j-.5)*TAU/p.k,q=p.R*p.pin*s,u=t[j%p.k];c.quadraticCurveTo(Math.cos(am)*q,Math.sin(am)*q,u[0],u[1])}
+  c.closePath()};
+ c.save();c.globalAlpha*=fade;c.lineJoin='miter';c.miterLimit=3;
+ P.forEach((p,i)=>{
+  const lc=Math.max(0,a-p.dl),s=eb(lc/.2),f=ez(lc/.25);if(s<=.01)return;
+  const nx=(p.x+140)/680,[kk,pu]=kick((sg>0?nx:1-nx)*.14),saw=Math.pow(1-((tt*(4+p.dp*3)+p.ph)%1),4),th=Math.max(saw*(1-.6*ag),Math.min(1.2,pu));
+  const jr=rng(hs(e.seed,i,qt));
+  c.save();c.translate(200+p.x*f+(jr()-.5)*(4+I*8)*ja+(lx*(10+16*p.dp)*(.6+.6*I)+kk*(14+22*p.dp)*(.7+.6*I)),200+p.y*f+(jr()-.5)*(3+I*6)*ja);
+  c.rotate((jr()-.5)*(.05+.06*I)*ja+kk*(p.dp-.5)*.12);c.scale(1+.15*Math.abs(lx)+.12*Math.min(1,Math.abs(kk)),1);
+  const gx=Math.cos(p.rot)*p.R,gy=Math.sin(p.rot)*p.R,gr=c.createLinearGradient(-gx,-gy,gx,gy);
+  gr.addColorStop(0,p.c[0]);gr.addColorStop(.5,p.c[1]);gr.addColorStop(1,p.c[2]);
+  shape(p,s,th);
+  if(p.tr==='neon'){ // image 2: glowing gradient membrane, elliptical hole, stippled grain
+   if(p.hole){const hx=p.R*.2,hy=-p.R*.05,rx=p.R*.2*s,rr=p.rot;c.moveTo(hx+Math.cos(rr)*rx,hy+Math.sin(rr)*rx);c.ellipse(hx,hy,rx,rx*.5,rr,0,TAU)}
+   if(!E){c.shadowColor=p.c[1];c.shadowBlur=14+I*14}
+   c.fillStyle=E?p.c[p.ph*3|0]:gr;c.fill('evenodd');c.shadowBlur=0;
+   c.strokeStyle=E?'#fff':'rgba(255,255,255,.7)';c.lineWidth=E?3:1.1;c.stroke();
+   if(!E){c.save();c.clip('evenodd');c.fillStyle='rgba(255,255,255,.55)';const g=rng(hs(e.seed,i,5));for(let j=0;j<46;j++)c.fillRect((g()-.5)*p.R*1.7,(g()-.5)*p.R*1.7,1.3,1.3);c.restore()}
+  }else if(p.tr==='blue'){ // image 1: flat blue membrane with a small inner loop
+   c.fillStyle=E?THREAD[1]:p.c[1];c.fill();c.strokeStyle='#fff';c.lineWidth=E?3:1;c.stroke();
+   c.beginPath();c.ellipse(p.R*.05,0,p.R*.2*s,p.R*.07*s,p.rot+.5,0,TAU);c.strokeStyle=E?THREAD[7]:'#111';c.lineWidth=E?3:1.6;c.stroke();
+  }else if(p.tr==='ink'){ // image 1: solid black silhouette, white hairline rim
+   if(!E){c.fillStyle=col(3);c.shadowColor='#fff';c.shadowBlur=8;c.fill();c.shadowBlur=0}
+   c.strokeStyle='#fff';c.lineWidth=E?3.4:1.4;c.stroke();
+  }else{ // image 1: white outline-only membrane with a hairline loop
+   c.strokeStyle=E?THREAD[7]:'rgba(255,255,255,.85)';c.lineWidth=E?3:.9;c.stroke();
+   c.beginPath();c.ellipse(-p.R*.12,p.R*.05,p.R*.22*s,p.R*.12*s,p.rot,0,TAU);c.stroke();
+  }
+  c.restore()});
+ // Floating glowing ovals (image 2), spread over the stage, shoved by the same flicks
+ for(let i=0;i<6;i++){
+  const o=rng(hs(e.seed,i,77)),ox=-140+o()*680,oy=15+o()*370,rx=14+o()*20,s=eb((a-.15-i*.07)/.2);if(s<=.01)continue;
+  const jr=rng(hs(e.seed,i,qt+9e3)),[kk]=kick(.05*i),x=200+(ox-200)*ez((a-.15-i*.07)/.3)+(jr()-.5)*6*ja+lx*8+kk*12,y=200+(oy-200)*ez((a-.15-i*.07)/.3)+(jr()-.5)*5*ja,cA=A[i%A.length];
+  c.save();c.translate(x,y);c.rotate(o()*TAU);c.beginPath();c.ellipse(0,0,rx*s,rx*s*.55,0,0,TAU);
+  if(!E){const g=c.createRadialGradient(-rx*.25,0,0,0,0,rx);g.addColorStop(0,cA);g.addColorStop(1,K[i%K.length]);c.fillStyle=g;c.shadowColor=cA;c.shadowBlur=16}else c.fillStyle=cA;
+  c.fill();c.restore()}
+ c.restore();
+};
+// Taunting: symmetrical curling tendrils that draw themselves
+X.taunt=(c,a,I,E,col,e,T)=>{const r=rng(e.seed),p=ez(a/1.4),tt=T/60,h=r()*8|0;
+ for(let i=0;i<5;i++){const b=-1.2+i*.6+r()*.3,cv=1.5+r()*2.5,len=90+r()*70,ph=r()*6;
+  for(const m of[1,-1]){c.strokeStyle=col(h+i,70);c.lineWidth=E?9:8-i*.6;c.beginPath();
+   for(let t=0;t<=p;t+=.02){const an=b+Math.sin(t*cv*3+ph+tt*1.5)*.9+t*cv*1.5,rr=t*len*(1+I*.5);c[t?'lineTo':'moveTo'](200+m*Math.cos(an)*rr*(1+.3*Math.sin(tt*2.2)),180+Math.sin(an)*rr)}c.stroke()}}};
+// Teasing / provocation: a living metaball system that keeps evolving while the stick keeps moving up and down.
+// Every reversal buds a new lobe on the current blob; every second reversal (at most ~1/s) the blob hands over to a new one in a different part of the screen.
+// Lobes cycle: bud out on a stretching neck, some pinch off and recoil, then retract. Colours come from the shared palette via col().
+X.tease=(c,a,I,E,col,e,T,S)=>{
+ const tn=T/60,ly=(S&&S.G&&S.G.ly)||0,held=Math.max(0,(T-e.last)/60),ret=ez((held-.25)/.9),fy=(S&&S.G&&S.G.fy)||[],sg=(S&&S.G&&S.G.fys)||1;
+ // Damped-spring response to each vertical reversal: starts at 0, overshoots, wobbles, settles (inertia + momentum lag)
+ const spr=dl=>{let y=0;for(let q=0;q<fy.length;q++){const age=(T-fy[fy.length-1-q])/60-dl;if(age<=0)continue;y+=(q%2?-sg:sg)*Math.exp(-age*4.5)*Math.sin(age*15)}return y};
+ // Spawn times of each blob: the start, then every 2nd reversal that is >= 0.9s after the previous one (reversals are logged by emoStep in e.ev)
+ const ev=e.ev||[],sp=[e.t0];let cnt=0;for(const f of ev){cnt++;if(cnt>=2&&f-sp[sp.length-1]>=54){sp.push(f);cnt=0}}
+ const BR=40+18*I,PL=[0,1,2,4,5,6,7],CS=[]; // PL: shared palette indices without the charcoal one
+ const mk=(q,an,b)=>{const rk=22+q()*10+4*I,sum=BR+rk,dS=sum*1.3,d0=sum*.7,sn=q()<.4,D=sn?dS*(1.1+q()*.15):d0+(dS-d0)*(.2+q()*.2);
+  let tS=0;if(sn){let lo=0,hi=1;for(let k=0;k<20;k++){const m=(lo+hi)/2;if(ez(m)*D<dS)lo=m;else hi=m}tS=hi*.45} // when the neck reaches its breaking length
+  return{an,r:rk,dS,d0,sn,D,b,tS,life:1.8+q()*1.4,ph:q()*TAU,ph2:q()*TAU,A:3+q()*4}};
+ let prev=null;
+ for(let n=0;n<sp.length;n++){
+  const q=rng(hs(e.seed,n,1)),t0=sp[n]/60,last=n+1>=sp.length,t1=last?0:sp[n+1]/60;let cx=200,cy=200;
+  if(n>0)for(let k=0;k<6;k++){cx=10+q()*380;cy=130+q()*140;if(Math.hypot(cx-prev[0],(cy-prev[1])*1.3)>=150)break} // a different part of the screen
+  prev=[cx,cy];const rn=last?ret:ez((tn-t1)/.9);if(rn>=1)continue; // older blobs retract as the next one grows
+  const i0=q()*7|0,ga=q()*TAU,base=q()*TAU,dl=[.04,.12,.22,.30];
+  for(let k=3;k>0;k--){const z=q()*(k+1)|0,t=dl[k];dl[k]=dl[z];dl[z]=t}
+  const lobes=dl.map((d,j)=>{const L=mk(q,base+j*TAU/4+(q()-.5)*.6,t0+d);L.init=1;return L});
+  const slot=lobes.slice();let m=0;for(const f of ev)if(f>sp[n]&&(last||f<sp[n+1])){const q2=rng(hs(e.seed,n*97+m+5,5)),j=m%4,old=slot[j],nl=mk(q2,old.an+(m%2?1:-1)*(.7+q2()*.4),f/60);old.life=Math.min(old.life,f/60-old.b);slot[j]=nl;lobes.push(nl);m++} // each reversal buds a new lobe in a free direction; the lobe it replaces retracts
+  const pn=ez((tn-t0)/.6),px=cx+Math.sin(tn*.82+.2+n)*5,py=cy+Math.sin(tn*.82+1.1+n)*4+spr(0)*7+ly*5;let osc=0;
+  const K=lobes.filter(L=>tn-L.b<L.life+.6).map((L,j)=>{const age=tn-L.b,s0=L.D*ez(age/.45),u=(s0-L.d0)/(L.dS-L.d0),snp=L.sn&&s0>=L.dS,dt=age-L.tS,o=snp?Math.exp(-dt*7)*Math.sin(dt*26):0,lr=ez((age-L.life)/.55),gone=Math.max(rn,lr);osc+=o;
+   const s=s0*(1-.8*gone)*(1-.05*o);
+   return{x:px+Math.cos(L.an)*s+Math.sin(tn*.8+L.ph)*L.A,y:py+Math.sin(L.an)*s+Math.cos(tn*.65+L.ph2)*L.A*.8+spr(.06+j*.04)*15+ly*8*Math.min(1,s0/L.D),
+    r:L.r*(L.init?pn:ez(age/.35))*(1-gone)*(1+.14*o+.05*Math.sin(tn*1.8+L.ph)),th:snp?0:Math.pow(1-Math.max(0,u),1.5)*(1-lr)}});
+  CS.push({K,i0,ga,px,py,P:{x:px,y:py,r:BR*pn*(1-rn)*(1+.045*Math.sin(tn*2.1+n)+.025*Math.sin(tn*3.7+1.4))*(1-.04*osc)}})}
+ if(!CS.length)return;
+ // Offscreen layer (2x) so the glow, rim and grain are composited per pixel
+ const g0=X.tease.L||(X.tease.L=document.createElement('canvas'));if(g0.width!==1480){g0.width=1480;g0.height=840}
+ const g=g0.getContext('2d');g.setTransform(1,0,0,1,0,0);g.clearRect(0,0,1480,840);g.setTransform(2,0,0,2,340,20);
+ const pt=(q,R,an)=>[q.x+Math.cos(an)*R,q.y+Math.sin(an)*R],cl=v=>Math.min(1,Math.max(-1,v));
+ // Metaball neck between two circles; V is how wide it is (0.5 fused, ~0.02 a hair-thin thread)
+ const nk=(q1,q2,V)=>{const dx=q2.x-q1.x,dy=q2.y-q1.y,d=Math.hypot(dx,dy),r1=q1.r,r2=q2.r;if(r1<1||r2<1||d<=Math.abs(r1-r2))return;
+  let u1=0,u2=0;if(d<r1+r2){u1=Math.acos(cl((r1*r1+d*d-r2*r2)/(2*r1*d)));u2=Math.acos(cl((r2*r2+d*d-r1*r1)/(2*r2*d)))}
+  const ab=Math.atan2(dy,dx),sp2=Math.acos(cl((r1-r2)/d)),H=Math.PI/2,
+   a1a=ab+u1+(sp2-u1)*V,a1b=ab-u1-(sp2-u1)*V,a2a=ab+Math.PI-u2-(Math.PI-u2-sp2)*V,a2b=ab-Math.PI+u2+(Math.PI-u2-sp2)*V,
+   P1a=pt(q1,r1,a1a),P1b=pt(q1,r1,a1b),P2a=pt(q2,r2,a2a),P2b=pt(q2,r2,a2b);
+  let d2=Math.min(V*2.4,Math.hypot(P1a[0]-P2a[0],P1a[1]-P2a[1])/(r1+r2));d2*=Math.min(1,d*2/(r1+r2));
+  const q1a=pt({x:P1a[0],y:P1a[1]},r1*d2,a1a-H),q2a=pt({x:P2a[0],y:P2a[1]},r2*d2,a2a+H),q2b=pt({x:P2b[0],y:P2b[1]},r2*d2,a2b-H),q1b=pt({x:P1b[0],y:P1b[1]},r1*d2,a1b+H);
+  g.moveTo(P1a[0],P1a[1]);g.bezierCurveTo(q1a[0],q1a[1],q2a[0],q2a[1],P2a[0],P2a[1]);g.lineTo(P2b[0],P2b[1]);g.bezierCurveTo(q2b[0],q2b[1],q1b[0],q1b[1],P1b[0],P1b[1]);g.closePath()};
+ const sc=(C,k)=>col(PL[(C.i0+k*2)%7]),fl=rim=>{g.fill();if(rim)g.stroke()},circ=(q,rim)=>{if(q.r>.5){g.beginPath();g.arc(q.x,q.y,q.r,0,TAU);fl(rim)}};
+ const paint=(C,rim,ec)=>{circ(C.P,rim);C.K.forEach((k,j)=>{if(ec)g.fillStyle=sc(C,(1+j)%4); // embroidery: each lobe its own thread colour
+  if(k.th>.004){g.beginPath();nk(C.P,k,Math.max(.02,.5*k.th));fl(rim)}circ(k,rim)})};
+ if(!E){g.fillStyle=g.strokeStyle=col(5);g.globalAlpha=.85;g.lineWidth=2.2;g.lineJoin='round';CS.forEach(C=>paint(C,true,false));g.globalAlpha=1} // clean pale rim in the palette's cream
+ CS.forEach(C=>{let fs=sc(C,0);if(!E){fs=g.createLinearGradient(C.px-Math.cos(C.ga)*115,C.py-Math.sin(C.ga)*115,C.px+Math.cos(C.ga)*115,C.py+Math.sin(C.ga)*115);[0,1,2,3].forEach(i=>fs.addColorStop(i/3,sc(C,i)))}g.fillStyle=fs;paint(C,false,E)});
+ if(!E){
+  g.globalCompositeOperation='source-atop'; // soft subsurface glow, then fine grain, only where the fluid is
+  CS.forEach(C=>{const gl=g.createRadialGradient(C.px-BR*.2,C.py+BR*.35,0,C.px,C.py,BR*3.2);gl.addColorStop(0,'rgba(255,255,255,.28)');gl.addColorStop(1,'rgba(255,255,255,0)');g.fillStyle=gl;g.fillRect(C.px-BR*3.4,C.py-BR*3.4,BR*6.8,BR*6.8)});
+  const tile=X.tease.N||(X.tease.N=(()=>{const t=document.createElement('canvas');t.width=t.height=128;const x=t.getContext('2d'),id=x.createImageData(128,128),q=rng(7);
+   for(let i=0;i<id.data.length;i+=4){const v=q()<.5?255:0;id.data[i]=id.data[i+1]=id.data[i+2]=v;id.data[i+3]=10+q()*50}x.putImageData(id,0,0);return t})());
+  g.save();g.setTransform(1,0,0,1,0,0);g.fillStyle=g.createPattern(tile,'repeat');g.fillRect(0,0,1480,840);g.restore();
+  g.globalCompositeOperation='source-over';g.strokeStyle='rgba(255,255,255,.75)';g.lineWidth=1.4;g.lineCap='round'; // delicate edge highlight
+  CS.forEach(C=>[C.P,...C.K].forEach(q=>{if(q.r>7){g.beginPath();g.arc(q.x,q.y,q.r*.84,Math.PI*1.1,Math.PI*1.45);g.stroke()}}))}
+ c.drawImage(g0,-170,-10,740,420);
+};
 // Indirectness: brush strokes start from a single point and fan out diagonally, leaving particles
 X.indirect=(c,a,I,E,col,e)=>{const r=rng(e.seed),p=ez(a/1.1),h=r()*8|0,b=Math.atan2(e.dy,e.dx),ox=200-Math.cos(b)*150,oy=200-Math.sin(b)*150;
  for(let k=-4;k<=4;k++){const L=.6+r()*.4,an=b+k*.1+(r()-.5)*.1,len=330*L,wm=(E?15:9+r()*8)*(1-Math.abs(k)*.06),cb=(r()-.5)*90,N=26;c.fillStyle=col(h+k);
@@ -268,18 +645,9 @@ function glyph(c,k){if(k<4){c.rotate(k*1.5708);c.moveTo(0,-30);c.lineTo(26,0);c.
 function drawEmo(c,S,T,E){const e=S.emo,I=.3+.7*S.i,col=i=>E?THREAD[((i|0)%8+8)%8]:GP[((i|0)%8+8)%8];
  if(e&&e.type==='init'&&T<e.until)for(let l=0;l<4;l++){c.save();c.translate(W/2+(l-1.5)*230,H-100);c.scale(2,2);c.rotate([-1.5708,3.1416,0,1.5708][l]);c.strokeStyle='rgba(255,255,255,.4)';c.lineWidth=E?5:3;c.beginPath();glyph(c,0);c.stroke();c.restore()}
  for(const t of S.tl){c.save();c.translate(W/2+t.x*230,t.y);c.scale(2,2);const f=col(t.c);c.fillStyle=f;c.strokeStyle='#fff';c.lineWidth=E?5:2.5;if(!E){c.shadowColor=f;c.shadowBlur=24}c.beginPath();glyph(c,t.k);c.fill();c.stroke();c.restore()}
- if(!e||!X[e.type])return;const a=(T-e.t0)/60,fa=Math.min(1,(e.until-T)/18);if(fa<=0||a<0)return;
- c.save();c.globalAlpha=fa;c.translate(W/2,H/2);c.scale(2.6,2.6);c.translate(-200,-200);c.lineCap='round';c.lineJoin='round';
- X[e.type](c,a,I,E,col,e,T,S);c.setLineDash([]);c.restore()}
-/* ---------- LUMINOUS SURREALISM: whole-frame pass shared by emotions and button effects ---------- */
-const lb=document.createElement('canvas');
-function lumin(c,T){const w=cv.width,h=cv.height;c.setTransform(1,0,0,1,0,0);c.imageSmoothingEnabled=true;
- for(const[d,al]of[[10,.5],[24,.45]]){const bw=Math.max(8,w/d|0),bh=Math.max(8,h/d|0);if(lb.width!==bw||lb.height!==bh){lb.width=bw;lb.height=bh}
-  const q=lb.getContext('2d');q.globalCompositeOperation='copy';q.drawImage(cv,0,0,bw,bh);c.globalCompositeOperation='lighter';c.globalAlpha=al;c.drawImage(lb,0,0,w,h)}
- c.globalAlpha=1;
- for(let i=0;i<5;i++){const x=(hs(7,i,1)/4294967296*.9+.05+Math.sin(T/240+i*2)*.02)*w,g2=c.createLinearGradient(0,0,0,h);g2.addColorStop(0,'rgba(24,224,255,0)');g2.addColorStop(.5,'rgba(140,210,255,'+(.12+.1*Math.sin(T/50+i))+')');g2.addColorStop(1,'rgba(255,47,208,0)');c.fillStyle=g2;c.fillRect(x,0,Math.max(1,2*sc),h)}
- for(let i=0;i<16;i++){const x=hs(9,i,1)/4294967296*w,y=((hs(9,i,2)/4294967296*h-T*(.15+i%4*.08)*sc*1.5)%h+h)%h,tw=.35+.35*Math.sin(T/20+i*3);c.fillStyle=`rgba(${i%2?'200,255,230':'255,150,230'},${tw})`;c.beginPath();c.arc(x,y,(1.5+i%3)*sc,0,7);c.fill()}
- c.globalCompositeOperation='source-over'}
+ const one=(e,fa)=>{if(!e||!X[e.type])return;const a=(T-e.t0)/60;if(fa<=0||a<0)return;c.save();c.globalAlpha=fa;c.translate(W/2,H/2);c.scale(2.6,2.6);c.translate(-200,-200);c.lineCap='round';c.lineJoin='round';X[e.type](c,a,I,E,col,e,T,S);c.setLineDash([]);c.restore()};
+ if(S.pv&&T<S.pe)one(S.pv,Math.min(1,(S.pe-T)/24)*Math.min(1,Math.max(0,(S.pv.until-T)/30)));
+ if(e)one(e,Math.min(1,(e.until-T)/30)*ez((T-e.t0)/14))}
 /* ---------- INPUT / LOOP / RECORD / REPLAY ---------- */
 const keys=new Set();addEventListener('keydown',e=>{keys.add(e.code);if(e.code==='Space')e.preventDefault()});addEventListener('keyup',e=>keys.delete(e.code));
 const KB={KeyJ:'A',KeyK:'B',KeyU:'X',KeyI:'Y',Digit1:'DL',Digit2:'DR',KeyT:'DU',KeyG:'MENU',KeyV:'VIEW',KeyC:'L3'};
@@ -304,7 +672,97 @@ $('bRec').onclick=()=>{if(!rec){S=newSim(rnd());prev={};rec={format:'padmotion/1
 const play=seed=>{if(!lastLog)return;rp={log:lastLog,ei:0,S:newSim(seed)};$('bPlay').classList.add('on')};
 $('bPlay').onclick=()=>play(lastLog&&lastLog.header.sessionSeed);$('bRoll').onclick=()=>play(rnd());
 const copy=async(t,m)=>{try{await navigator.clipboard.writeText(t);st.textContent=m}catch(e){st.textContent='Clipboard blocked in this view'}};
-$('bJson').onclick=()=>lastLog&&copy(JSON.stringify({...lastLog,rows:undefined}),'Log copied');$('bCsv').onclick=()=>lastLog&&copy(lastLog.rows.join('\n'),'CSV copied');
+$('bJson').onclick=()=>lastLog&&copy(JSON.stringify({...lastLog,rows:undefined}),'Log copied');
+$('bCsv').onclick=()=>{if(!lastLog)return;const hdr='time_sec,tick,lx,ly,rx,ry,lt,rt,emitter_x,emitter_y,intensity,emotion\n';const body=lastLog.rows.slice(1).map(r=>{const p=r.split(',');const t=(+p[0]/60).toFixed(4);return t+','+r}).join('\n');copy(hdr+body,'AE CSV copied (time_sec + data)')};
 $('bRet').onclick=e=>{showRet=!showRet;e.target.classList.toggle('on',showRet)};
+/* ---------- AE JSX export ---------- */
+$('bAe').onclick=()=>{if(!lastLog){st.textContent='No take recorded';return}
+ const L=lastLog,seed=L.header.sessionSeed,rows=L.rows.slice(1).map(r=>r.split(',')),n=rows.length;
+ let jsx=`// PadMotion → After Effects (paste into ExtendScript Toolkit or File > Scripts > Run Script File)
+// Session seed: ${seed}  |  ${n} frames @ 60fps
+(function(){
+app.beginUndoGroup("PadMotion Import");
+var comp=app.project.items.addComp("PadMotion_${seed}",1920,1080,1,${(n/60).toFixed(3)},60);
+var nullL=comp.layers.addNull();
+nullL.name="Emitter";
+nullL.threeDLayer=true;
+var pos=nullL.property("Position");
+var intensity=nullL.property("Effects").addProperty("ADBE Slider Control");
+intensity.name="Intensity";
+intensity.property("Slider").setValue(0);
+`;
+ for(let i=0;i<n;i++){
+  const p=rows[i],t=(+p[0])/60,x=+p[7],y=+p[8],inten=+p[9];
+  jsx+=`pos.setValueAtTime(${t.toFixed(4)},[${x},${y},0]);\n`;
+  jsx+=`intensity.property("Slider").setValueAtTime(${t.toFixed(4)},${inten});\n`;
+ }
+ jsx+=`var marker=new MarkerValue("");\n`;
+ let prevE='none';
+ for(let i=0;i<n;i++){
+  const p=rows[i],t=(+p[0])/60,em=p[10]||'none';
+  if(em!==prevE){
+   jsx+=`marker.comment="${em}"; nullL.property("Marker").setValueAtTime(${t.toFixed(4)},marker);\n`;
+   prevE=em;
+  }
+ }
+ jsx+=`app.endUndoGroup();
+alert("PadMotion null + keyframes + markers created in comp 'PadMotion_${seed}'");
+})();`;
+ copy(jsx,'AE JSX copied – paste into ExtendScript and run')};
+/* ---------- Video export (MediaRecorder on canvas) ---------- */
+let mediaRec=null,vidChunks=[],vidMime='',vidStream=null;
+const pickMime=()=>{
+ // Prefer MP4 when the browser supports it, otherwise fall back to WebM
+ const cands=['video/mp4;codecs=avc1.42E01E','video/mp4;codecs=avc1','video/mp4','video/webm;codecs=vp9','video/webm;codecs=vp8','video/webm'];
+ for(const m of cands){try{if(typeof MediaRecorder!=='undefined'&&MediaRecorder.isTypeSupported(m))return m}catch(e){}}
+ return typeof MediaRecorder!=='undefined'?'video/webm':'';
+};
+$('bVid').onclick=()=>{
+ // Stop if already recording
+ if(mediaRec&&mediaRec.state!=='inactive'){
+  try{mediaRec.requestData()}catch(e){}
+  mediaRec.stop();
+  $('bVid').textContent='🎬 Video';$('bVid').classList.remove('on');
+  return;
+ }
+ if(typeof MediaRecorder==='undefined'){st.textContent='MediaRecorder not supported in this browser';return}
+ vidMime=pickMime();
+ if(!vidMime){st.textContent='No supported video format';return}
+ vidChunks=[];
+ try{
+  // Prefer 30 fps for broader compatibility; 60 can fail on some GPUs
+  vidStream=cv.captureStream(30);
+  const tracks=vidStream.getVideoTracks();
+  if(!tracks.length){st.textContent='Canvas capture failed';return}
+  try{
+   mediaRec=new MediaRecorder(vidStream,{mimeType:vidMime,videoBitsPerSecond:8e6});
+  }catch(e1){
+   try{mediaRec=new MediaRecorder(vidStream,{mimeType:vidMime})}catch(e2){
+    mediaRec=new MediaRecorder(vidStream);
+    vidMime=mediaRec.mimeType||'video/webm';
+   }
+  }
+  mediaRec.ondataavailable=e=>{if(e.data&&e.data.size>0)vidChunks.push(e.data)};
+  mediaRec.onerror=e=>{st.textContent='Recorder error: '+(e.error&&e.error.name||'unknown');$('bVid').textContent='🎬 Video';$('bVid').classList.remove('on')};
+  mediaRec.onstop=()=>{
+   if(vidStream){vidStream.getTracks().forEach(t=>t.stop());vidStream=null}
+   if(!vidChunks.length){st.textContent='No video data captured';return}
+   const ext=(vidMime||'').includes('mp4')?'mp4':'webm';
+   const blob=new Blob(vidChunks,{type:vidMime||'video/webm'});
+   const url=URL.createObjectURL(blob);
+   const a=document.createElement('a');
+   a.style.display='none';a.href=url;
+   a.download='PadMotion_'+(lastLog?lastLog.header.sessionSeed:Date.now())+'.'+ext;
+   document.body.appendChild(a);a.click();
+   setTimeout(()=>{document.body.removeChild(a);URL.revokeObjectURL(url)},1500);
+   st.textContent='Video saved ('+ext.toUpperCase()+', '+(blob.size/1e6).toFixed(1)+' MB)';
+   mediaRec=null;
+  };
+  // timeslice 250 ms forces regular dataavailable events
+  mediaRec.start(250);
+  $('bVid').textContent='■ Stop Video';$('bVid').classList.add('on');
+  st.textContent='Recording… ('+vidMime+') – click again to stop & download';
+ }catch(err){st.textContent='Video start failed: '+err.message}
+};
 requestAnimationFrame(t=>{last=t;frame(t)});
 </script></body></html>
