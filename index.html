@@ -39,6 +39,16 @@ button.on{background:var(--ac);color:#08070c;border-color:var(--ac)}
 #mus .beats{display:inline-flex;gap:4px;margin-left:10px;vertical-align:middle}#mus .beats i{width:11px;height:11px;border:2px solid var(--ln)}#mus .beats i.on{background:var(--hi);border-color:var(--hi)}
 #mus .lv{display:block;font:15px/1.3 var(--disp);letter-spacing:.04em;color:var(--mut);margin-top:2px}
 #st::before{content:"> ";color:var(--ac)}
+/* timeline strip (Timeline mode with a song): the song as a track with a bar grid, each loop a clip where it was recorded, the playhead in yellow */
+#tline{position:fixed;left:20px;right:76px;bottom:calc(16px + env(safe-area-inset-bottom,0px));padding:8px 10px 10px;background:var(--pn);border:2px solid var(--ln);font:15px/1 var(--disp);letter-spacing:.08em;color:var(--mut);z-index:3}
+#tline::before{content:"";position:absolute;top:-2px;left:14px;width:26px;height:6px;background:var(--ac)}
+#tline .hd{display:flex;justify-content:space-between;gap:12px;margin-bottom:7px;white-space:nowrap;overflow:hidden}#tline .hd b{color:var(--ac);font-weight:normal}#tlT{color:var(--fg)}
+#tlTrk{position:relative;height:24px;cursor:pointer;background:#ffffff08 repeating-linear-gradient(90deg,#ffffff1c 0 2px,transparent 2px var(--bw,100%))}
+#tlTrk .clip{position:absolute;height:18px;min-width:6px;padding:3px 4px 0;border:2px solid var(--c);background:var(--c);color:#08070c;font:15px/1 var(--disp);overflow:hidden;white-space:nowrap;cursor:pointer}
+#tlTrk .clip:hover{filter:brightness(1.25)}
+#tlTrk .clip.mute{background:repeating-linear-gradient(45deg,var(--c) 0 2px,transparent 2px 7px);color:var(--c);opacity:.6}
+#tlTrk .clip.sel{outline:2px solid #fff;outline-offset:1px}
+#tlHead{position:absolute;top:-5px;bottom:-5px;width:3px;margin-left:-1px;background:var(--hi);pointer-events:none;z-index:1}
 /* the name: each letter slowly cycles through the thread palette, out of step with its neighbours */
 #logo{position:fixed;right:22px;top:calc(4px + env(safe-area-inset-top,0px));font:76px/1 var(--disp);letter-spacing:.04em;user-select:none;pointer-events:none;text-align:right}
 #logo span{display:inline-block;color:transparent;-webkit-background-clip:text;background-clip:text}
@@ -77,11 +87,12 @@ td b.ka{color:#2fd45a}td b.kb{color:#e8262d}td b.kx{color:#4f7bff}td b.ky{color:
  <div class="grp"><span class="lab">FRAME</span><div class="row"><select id="sFmt" title="Frame format"><option value="16:9">16:9</option><option value="1:1">1:1</option><option value="4:5">4:5</option><option value="9:16">9:16</option></select><select id="sRes" title="Export size (short side)"><option value="720">720p</option><option value="1080" selected>1080p</option><option value="1440">1440p</option><option value="2160">4K</option></select></div></div>
  <div class="grp"><span class="lab">EXPORT</span><div class="row"><button id="bExp" class="px">⤓ Video</button><button id="bPng" class="px">⤓ Still</button><button id="bCsv" class="px" title="Copy the loop layers as per-frame CSV data (for After Effects)">AE CSV</button></div></div>
  <div class="grp"><span class="lab">TOOLS</span><div class="row"><button id="bMot" class="px">◎ Motion</button><button id="bRet" class="px on">Reticle</button></div></div>
- <div class="grp"><span class="lab">MUSIC</span><div class="row"><button id="bPc" class="px" title="Listen to what the computer is playing (share screen with system audio)">♪ PC Audio</button><button id="bFile" class="px" title="Play an audio file here">♪ File</button><button id="bSnap" class="px on" title="Snap A B X Y to the music: half beat, whole beat or off">Snap ½</button><input id="fAud" type="file" accept="audio/*" hidden></div></div>
+ <div class="grp"><span class="lab">MUSIC</span><div class="row"><button id="bPc" class="px" title="Listen to what the computer is playing (share screen with system audio)">♪ PC Audio</button><button id="bFile" class="px" title="Play an audio file here">♪ File</button><button id="bSnap" class="px on" title="Snap A B X Y to the music: half beat, whole beat or off">Snap ½</button><button id="bTl" class="px" title="Loops: Overlay (every loop repeats on top of the others) or Timeline (each loop plays once, where it was recorded in the song)">▤ Overlay</button><input id="fAud" type="file" accept="audio/*" hidden></div></div>
 </div>
 </div>
 <div id="hud"><div class="t">LIVE</div><div class="dots">. . . . . . . .</div><div id="st"></div><div id="mus" style="display:none"></div></div>
 </div>
+<div id="tline" hidden><div class="hd"><span><b>■ TIMELINE</b> <span id="tlT"></span></span><span id="tlHint">click a clip: mute / unmute · right-click: delete · click the track: jump there</span></div><div id="tlTrk"><div id="tlHead"></div></div></div>
 <div id="logo" aria-label="motionpad"></div>
 <aside id="ctl" aria-label="Controls"><button id="ctlTab" class="px" title="Controls (H)">CONTROLS</button><div id="ctlIn">
  <div class="ch"><div><h2>CONTROLS</h2><p>gamepad · keyboard — press <kbd>H</kbd> or <kbd>ESC</kbd> to close</p></div><button id="ctlX" class="px" title="Close">×</button></div>
@@ -151,6 +162,7 @@ td b.ka{color:#2fd45a}td b.kb{color:#e8262d}td b.kx{color:#4f7bff}td b.ky{color:
   <tr><td><b>♪ PC AUDIO</b></td><td class="k2">—</td><td>listen to the music playing on the computer: pick <b>Entire screen</b> and tick <b>Share system audio</b> (Chrome / Edge). Click again to stop</td></tr>
   <tr><td><b>♪ FILE</b></td><td class="k2">—</td><td>play an audio file here. Either way the HUD shows the tempo, the beat (1 2 3 4) and bass / mid / high levels</td></tr>
   <tr><td><b>SNAP</b></td><td class="k2">—</td><td>with music on, <kbd>A</kbd> <kbd>B</kbd> <kbd>X</kbd> <kbd>Y</kbd> wait for the next half beat (½) or beat (1) so the actions land in time; click to cycle ½ · 1 · off. Loops recorded with music snap to whole bars, the bass makes the frame jolt on each kick and the highs scatter stitches</td></tr>
+  <tr><td><b>▤ OVERLAY / ▬ TIMELINE</b></td><td class="k2">—</td><td>how loops play with a song from ♪ FILE. OVERLAY: every loop repeats on top of the others. TIMELINE: each loop is a clip that plays once, at the point in the song where you recorded it, so you can build a whole video along the song. A strip along the bottom shows the clips: click one to mute / unmute it, right-click to delete it, click the track to jump the song there. The export then runs from the first clip to the end of the last one</td></tr>
   <tr><td><b>CONTROLS</b></td><td class="k2"><kbd>H</kbd></td><td>open / close this panel</td></tr>
  </table></div>
 </div></aside>
@@ -570,8 +582,10 @@ function render(S,live,showRet){const c=ctx,T=Math.floor(S.tick/5)*5; // embroid
  if(S.view==='type')typeGround(c,S,T);else{c.globalAlpha=Math.min(1,S.tex*1.4);c.drawImage(fab,0,0);c.globalAlpha=1}
  if(S.dim==='3d'){c.strokeStyle='#ffffff40';c.lineWidth=1.5;c.beginPath();for(let k=-12;k<=12;k++){c.moveTo(W/2,HZ);c.lineTo(W/2+k*220,H)}for(let k=1;k<=10;k++){const y=HZ+(H-HZ)*(k/10)**2;c.moveTo(0,y);c.lineTo(W,y)}c.stroke()}
  // looper layers first (each its own sim, in the live view, moved / scaled / recoloured), then the live performance on top
- LAYERS.forEach((L,i)=>{const on=live&&i===sel;if(L.mute&&!on)return;const Ls=L.S;Ls.view=S.view;Ls.dim=S.dim;Ls.tex=S.tex;
-  if(!L.mute){c.save();c.translate(W/2+L.x,H/2+L.y);c.rotate(L.r||0);c.scale(L.s,L.s);c.translate(-W/2,-H/2);withPalette(L.pal,()=>scene(c,Ls,Math.floor(Ls.tick/5)*5,false,false));c.restore()}
+ // (on the timeline only the clips the song is currently inside are drawn)
+ const tl=tlOn();
+ LAYERS.forEach((L,i)=>{const on=live&&i===sel,vis=!L.mute&&(!tl||L.act);if(!vis&&!on)return;const Ls=L.S;Ls.view=S.view;Ls.dim=S.dim;Ls.tex=S.tex;
+  if(vis){c.save();c.translate(W/2+L.x,H/2+L.y);c.rotate(L.r||0);c.scale(L.s,L.s);c.translate(-W/2,-H/2);withPalette(L.pal,()=>scene(c,Ls,Math.floor(Ls.tick/5)*5,false,false));c.restore()}
   if(on)layerFrame(c,L,i)});
  scene(c,S,T,live,showRet);
  // music: highs scatter a few stray cross-stitches in thread colours, re-picked on the same fives the stitches animate on
@@ -2034,11 +2048,25 @@ function liveInput(){pad=(navigator.getGamepads?[...navigator.getGamepads()]:[])
  through them, then back to playing. While one is selected the pad edits it instead of performing: left stick moves it,
  holding LB / RB rotates it (L3 straightens it),
  LT / RT shrink / grow it, Y shifts its thread colours, A cycles its speed (1x, 2x, 1/2x), X mutes it, B deletes it. */
-const LAYERS=[],LOOP={min:30,max:60*20,maxN:6};let loopRec=null,sel=-1,rotHeld={};
-function layerReset(L){L.S=newSim(L.seed);L.S.layer=true;L.i=0;L.ph=0;L.cyc=0}
-function stepLayer(L){const n=L.sp===.5?(L.ph++%2?0:1):L.sp;for(let k=0;k<n;k++){const r=L.log[L.i];step(L.S,{ax:r.ax,ev:r.ev});if(++L.i>=loopLen(L)){L.i=0;L.cyc=(L.cyc||0)+1}}}
-function closeLoop(){const q=loopRec;loopRec=null;if(!q||q.log.length<LOOP.min)return;if(LAYERS.length>=LOOP.maxN)LAYERS.shift();
- const L={seed:q.seed,log:q.log,x:0,y:0,s:1,pal:0,sp:1,mute:false};layerReset(L);const bars=barLoop(q,L);LAYERS.push(L);st.textContent='Layer '+LAYERS.length+' added ('+((L.exact||q.log.length)/60).toFixed(1)+' s loop'+bars+')'}
+const LAYERS=[],LOOP={min:30,max:60*20,maxN:6,maxTL:32};let loopRec=null,sel=-1,rotHeld={};
+function layerReset(L){L.S=newSim(L.seed);L.S.layer=true;L.i=0;L.ph=0;L.cyc=0;L.act=false}
+// TIMELINE mode (with a song from FILE): a loop is a clip that plays once, from the point in the song where it was recorded.
+// Its sim follows the song position - stepped forward tick by tick, rebuilt from the start when the song jumps back - so
+// scrubbing, the song looping round and the export all land on the same frames
+let TL=false;const tlOn=()=>TL&&AU.src==='file';
+function tlStep(L,t){const k=Math.floor((t-(L.songT0||0))*60*L.sp);if(k<0||k>=L.log.length){if(k<0&&L.i)layerReset(L);L.act=false;return}
+ if(k<L.i-1)layerReset(L);L.act=true;for(let n=0;L.i<=k&&n<600;n++){step(L.S,L.log[L.i]);L.i++}}
+// switching between timeline and looping (mode button, song loaded or stopped) restarts every layer from its first frame
+let tlWas=false;
+const stepLayers=t=>{const m=t!=null;if(m!==tlWas){tlWas=m;LAYERS.forEach(layerReset)}for(const L of LAYERS)if(m)tlStep(L,t);else stepLayer(L)};
+const clipEnd=L=>(L.songT0||0)+L.log.length/60/L.sp;
+function stepLayer(L){const n=L.sp===.5?(L.ph++%2?0:1):L.sp;for(let k=0;k<n;k++){if(L.i>=L.log.length)L.i=0;const r=L.log[L.i];step(L.S,{ax:r.ax,ev:r.ev});if(++L.i>=loopLen(L)){L.i=0;L.cyc=(L.cyc||0)+1}}}
+function closeLoop(){const q=loopRec;loopRec=null;if(!q||q.log.length<LOOP.min)return;const tl=tlOn();if(LAYERS.length>=(tl?LOOP.maxTL:LOOP.maxN))LAYERS.shift();
+ const L={seed:q.seed,log:q.log,x:0,y:0,s:1,pal:0,sp:1,mute:false,songT0:q.songT0};layerReset(L);
+ // on the timeline a clip keeps exactly what was played, where it was played; overlay loops snap to whole bars
+ if(tl){LAYERS.push(L);st.textContent='Clip '+LAYERS.length+' added at '+mmss(q.songT0||0)+' ('+(q.log.length/60).toFixed(1)+' s)';return}
+ const bars=barLoop(q,L);LAYERS.push(L);st.textContent='Layer '+LAYERS.length+' added ('+((L.exact||q.log.length)/60).toFixed(1)+' s loop'+bars+')'}
+const mmss=t=>Math.floor(t/60)+':'+String(Math.floor(t%60)).padStart(2,'0');
 // SNAP: with music playing, A B X Y wait for the next grid point (half beat by default, or a whole beat) so silliness,
 // dash, saber and the wheel land in time. A press just after a grid point (within ~a fifth of it) fires at once instead of
 // waiting a whole step; a release waits behind its own press so the two stay in order.
@@ -2108,28 +2136,79 @@ function fullRes(){const[w,h]=outDims();cv.width=w;cv.height=h;sc=w/W;ox0=oy0=0}
 // (they replay their recorded inputs, so they re-lay out in the new frame)
 function setFormat(f){if(!FORMATS[f]||exp)return;FMT=f;[W,H]=FORMATS[f];HZ=H*.3;INIT_Y=H-110;SB.floor=H-150;buildFab();es.width=Math.ceil(W/C);es.height=Math.ceil(H/C);
  try{localStorage.setItem('padmotion.fmt',f)}catch(e){}rp=null;S=Object.assign(newSim(rnd()),look(S));LAYERS.forEach(layerReset);resize()}
+// with a song playing from FILE, the export starts where the first loop started in the song and every other loop is wound
+// forward to where it sits against that point; returns that point in the song (null when there is none)
+function alignSong(){if(lastLog||AU.songT()==null)return null;const b=LAYERS.find(L=>L.songT0!=null);if(!b)return null;const T0=b.songT0;
+ for(const L of LAYERS)if(L!==b&&L.songT0!=null){const len=L.exact||L.log.length;let k=Math.round((((T0-L.songT0)*60)%len+len)%len);const sp=L.sp;L.sp=1;while(k-->0)stepLayer(L);L.sp=sp}
+ return T0}
+const startReplay=()=>{const s0=lastLog?simFrom(lastLog,lastLog.header.sessionSeed):Object.assign(newSim(rnd()),look(S));
+ rp={log:lastLog,len:lastLog?lastLog.axes.length:Math.max(240,...LAYERS.map(L=>Math.ceil(L.log.length/L.sp))),ei:0,S:s0,exp:true}};
+// the timeline export: from the start of the first clip that is on to the end of the last one; returns that start
+function prepTimeline(){const on=LAYERS.filter(L=>!L.mute),a=Math.min(...on.map(L=>L.songT0||0)),b=Math.max(...on.map(clipEnd));LAYERS.forEach(layerReset);
+ rp={log:null,len:Math.max(1,Math.ceil((b-a)*60)),ei:0,S:Object.assign(newSim(rnd()),look(S)),exp:true};return a}
 function exportVideo(){if(exp||rp&&!rp.exp)return;
  if(!lastLog&&!LAYERS.length){st.textContent='Record a loop first (hold LB)';return}
+ if(tlOn()&&!LAYERS.some(L=>!L.mute)){st.textContent='Every clip is muted: click one on the timeline to turn it back on';return}
+ exp={off:true};$('bExp').classList.add('on');st.textContent='⤓ preparing export…';
+ exportFrames().then(ok=>{if(!ok){exp=null;$('bExp').classList.remove('on');exportLive()}}).catch(e=>{console.error(e);exp=null;rp=null;resize();$('bExp').classList.remove('on');st.textContent='Export failed ('+(e&&e.message||e)+')'})}
+// EXPORT, frame by frame (Chrome / Edge): every frame of the replay is drawn and fed to the browser's H.264 encoder, the song
+// is cut from the decoded file and encoded as AAC, and both go into a regular MP4 with an index, so the clip can be skipped
+// through and the sound never drops out. Faster than real time. PC AUDIO (live sound that cannot be rewound) and browsers
+// without WebCodecs record the canvas live instead (exportLive).
+let MUX=null;
+const muxLib=()=>MUX||(MUX=new Promise((ok,no)=>{if(window.Mp4Muxer)return ok(window.Mp4Muxer);const s=document.createElement('script');
+ s.src='https://cdn.jsdelivr.net/npm/mp4-muxer@5.1.3/build/mp4-muxer.min.js';s.onload=()=>window.Mp4Muxer?ok(window.Mp4Muxer):no(new Error('muxer'));
+ s.onerror=()=>{MUX=null;s.remove();no(new Error('muxer'))};document.head.appendChild(s)}));
+async function exportFrames(){const tNow=AU.songT(),grid=AU.grid();
+ if(!window.VideoEncoder||!window.VideoFrame||AU.src==='pc')return false;
+ const[ow,oh]=outDims(),fps=60,big=Math.ceil(ow/16)*Math.ceil(oh/16)>8192,bitrate=Math.min(80e6,24e6*ow*oh/(1920*1080));
+ let vc=null;for(const codec of big?['avc1.640033','avc1.4d0033']:['avc1.640028','avc1.4d0028']){const c={codec,width:ow,height:oh,bitrate,framerate:fps,avc:{format:'avc'}};
+  try{if((await VideoEncoder.isConfigSupported(c)).supported){vc=c;break}}catch(e){}}
+ if(!vc)return false;
+ let M;try{M=await muxLib()}catch(e){return false}
+ let pcm=null,ac=null;
+ if(AU.on&&AU.src==='file'){pcm=await AU.decoded();if(!pcm||!window.AudioEncoder)return false;
+  const a={codec:'mp4a.40.2',sampleRate:pcm.sampleRate,numberOfChannels:Math.min(2,pcm.numberOfChannels),bitrate:192e3};
+  try{if((await AudioEncoder.isConfigSupported(a)).supported)ac=a}catch(e){}if(!ac)return false}
+ fullRes();LAYERS.forEach(layerReset);const tl=tlOn();let T0;if(tl)T0=prepTimeline();else{const A=alignSong();T0=A!=null?A:tNow||0;startReplay()}const len=rp.len;
+ // the beat jolt and the high sparkle follow the song at each frame (worked out from the file), not whatever is playing live
+ const env=ac?AU.envelope(pcm,T0,len+2,fps,grid):null;
+ const mux=new M.Muxer({target:new M.ArrayBufferTarget(),video:{codec:'avc',width:ow,height:oh,frameRate:fps},
+  audio:ac?{codec:'aac',numberOfChannels:ac.numberOfChannels,sampleRate:ac.sampleRate}:undefined,fastStart:'in-memory',firstTimestampBehavior:'offset'});
+ let err=null;const ve=new VideoEncoder({output:(c,m)=>mux.addVideoChunk(c,m),error:e=>err=e});ve.configure(vc);
+ let n=0;exp.done=false;
+ while(!exp.done){stepReplay();let V;if(exp.done)V=exp.last;else{stepLayers(tl?T0+n/fps:null);V=rp.S}
+  if(env){AU.pulse=env.pulse[n];AU.bass=env.bass[n];AU.high=env.high[n]}
+  render(V,false,showRet);warpPost(V);
+  const f=new VideoFrame(cv,{timestamp:Math.round(n*1e6/fps),duration:Math.round(1e6/fps)});ve.encode(f,{keyFrame:n%(fps*2)===0});f.close();n++;
+  if(err)throw err;
+  if(n%6===0){st.textContent='⤓ exporting video… '+Math.min(99,Math.round(100*n/len))+'%';do await new Promise(r=>setTimeout(r,0));while(ve.encodeQueueSize>6)}}
+ // the song from where the clip starts, for as long as the clip runs, wrapping round to the start as the song loops
+ if(ac){const ae=new AudioEncoder({output:(c,m)=>mux.addAudioChunk(c,m),error:e=>err=e});ae.configure(ac);
+  const sr=pcm.sampleRate,ch=ac.numberOfChannels,tot=Math.round(n/fps*sr),N=pcm.length,src=[...Array(ch)].map((_,i)=>pcm.getChannelData(Math.min(i,pcm.numberOfChannels-1)));
+  let p=(Math.round(T0*sr)%N+N)%N;
+  for(let o=0;o<tot;o+=4096){const k=Math.min(4096,tot-o),d=new Float32Array(k*ch);for(let c=0;c<ch;c++){const s=src[c];for(let i=0;i<k;i++)d[c*k+i]=s[(p+i)%N]}p=(p+k)%N;
+   const a=new AudioData({format:'f32-planar',sampleRate:sr,numberOfFrames:k,numberOfChannels:ch,timestamp:Math.round(o*1e6/sr),data:d});ae.encode(a);a.close()}
+  await ae.flush();ae.close()}
+ await ve.flush();ve.close();if(err)throw err;mux.finalize();
+ save(new Blob([mux.target.buffer],{type:'video/mp4'}),'padmotion_'+outTag()+'_'+stamp()+'.mp4');
+ exp=null;resize();$('bExp').classList.remove('on');st.textContent='Video exported (MP4, '+outTag()+(ac?', with music':AU.on?'':', no music: load a song with ♪ FILE first')+')';return true}
+function exportLive(){
  if(!window.MediaRecorder||!cv.captureStream){st.textContent='Video export needs Chrome, Edge or Firefox';return}
  // MP4 (H.264) where the browser can record it (Chrome / Edge 126+, Safari); WebM otherwise
  // above 1080p the H.264 level has to go up to 5.1 (avc1.640033) to allow the larger frame
- const[ow,oh]=outDims(),big=Math.ceil(ow/16)*Math.ceil(oh/16)>8192,mt=[...(big?['video/mp4;codecs=avc1.640033','video/mp4;codecs=avc1.4d0033']:[]),'video/mp4;codecs=avc1.640028','video/mp4;codecs=avc1.4d0028','video/mp4;codecs=avc1','video/mp4','video/webm;codecs=vp9','video/webm'].flatMap(t=>!AU.on?[t]:t.startsWith('video/mp4')?[t.includes('codecs')?t+',mp4a.40.2':t,t.includes('codecs')?t+',opus':t]:[t.includes('codecs')?t+',opus':t]).find(t=>MediaRecorder.isTypeSupported(t));
+ const[ow,oh]=outDims(),big=Math.ceil(ow/16)*Math.ceil(oh/16)>8192,mt=[...(big?['video/mp4;codecs=avc1.640033','video/mp4;codecs=avc1.4d0033']:[]),'video/mp4;codecs=avc1.640028','video/mp4;codecs=avc1.4d0028','video/mp4;codecs=avc1','video/mp4','video/webm;codecs=vp9','video/webm'].flatMap(t=>!AU.on?[t]:t.includes('codecs')?[t+(t.startsWith('video/mp4')?',mp4a.40.2':',opus')]:[]).concat(['video/webm']).find(t=>MediaRecorder.isTypeSupported(t));
  if(!mt){st.textContent='This browser cannot record video';return}
- exp={done:false};fullRes();LAYERS.forEach(layerReset);
- // with a song playing from FILE, the export starts where the first loop started in the song, every other loop is wound
- // forward to where it sits against that point, and the song is rewound there, so the clip plays them all in time with it
- if(!lastLog&&AU.songT()!=null){const b=LAYERS.find(L=>L.songT0!=null);if(b){const T0=b.songT0;
-  for(const L of LAYERS)if(L!==b&&L.songT0!=null){const len=L.exact||L.log.length;let k=Math.round((((T0-L.songT0)*60)%len+len)%len);const sp=L.sp;L.sp=1;while(k-->0)stepLayer(L);L.sp=sp}
-  AU.seek(T0)}}
- const s0=lastLog?simFrom(lastLog,lastLog.header.sessionSeed):Object.assign(newSim(rnd()),look(S));
- rp={log:lastLog,len:lastLog?lastLog.axes.length:Math.max(240,...LAYERS.map(L=>Math.ceil(L.log.length/L.sp))),ei:0,S:s0,exp:true};
+ exp={done:false};$('bExp').classList.add('on');fullRes();LAYERS.forEach(layerReset);
+ // the song is rewound to where the clip starts, so the loops play in time with it
+ if(tlOn())AU.seek(prepTimeline());else{const T0=alignSong();if(T0!=null)AU.seek(T0);startReplay()}
  // the music (FILE or PC AUDIO) goes in as the clip's sound track
  const at=AU.on?AU.tracks():[],vs=cv.captureStream(60),stream=at.length?new MediaStream([...vs.getVideoTracks(),...at]):vs;
  // bitrate follows the pixel count (24 Mbps at 1080p), capped at 80 Mbps
  const mr=new MediaRecorder(stream,{mimeType:mt,videoBitsPerSecond:Math.min(80e6,24e6*ow*oh/(1920*1080)),audioBitsPerSecond:192e3}),chunks=[];
  mr.ondataavailable=e=>{if(e.data.size)chunks.push(e.data)};
  const mp4=mt.startsWith('video/mp4');
- mr.onstop=()=>{save(new Blob(chunks,{type:mp4?'video/mp4':'video/webm'}),'padmotion_'+outTag()+'_'+stamp()+(mp4?'.mp4':'.webm'));exp=null;resize();$('bExp').classList.remove('on');st.textContent=(mp4?'Video exported (MP4, ':'Video exported as WebM (this browser cannot record MP4; ')+outTag()+(at.length?', with music':'')+')'};
+ mr.onstop=()=>{save(new Blob(chunks,{type:mp4?'video/mp4':'video/webm'}),'padmotion_'+outTag()+'_'+stamp()+(mp4?'.mp4':'.webm'));exp=null;resize();$('bExp').classList.remove('on');st.textContent=(mp4?'Video exported (MP4, ':'Video exported as WebM (this browser cannot record MP4; ')+outTag()+(at.length?', with music':', no music: load a song with ♪ FILE first')+')'};
  mr.start(250);exp.mr=mr;$('bExp').classList.add('on')}
 function exportPNG(){if(exp)return;const V=rp?rp.S:S;fullRes();render(V,false,false);warpPost(V);cv.toBlob(b=>{if(b)save(b,'padmotion_'+outTag()+'_'+stamp()+'.png');st.textContent='Still exported ('+outTag()+')'});resize()}
 const rnd=()=>(Math.random()*1e9)|0;
@@ -2140,11 +2219,15 @@ function rumble(){if(!pad||!pad.vibrationActuator)return;for(const r of S.rumble
 function stepReplay(){const L=rp.log,i=rp.S.tick,ev=[];if(L)while(rp.ei<L.events.length&&L.events[rp.ei].tick<=i+1)ev.push(L.events[rp.ei++]);step(rp.S,{ax:L?L.axes[i]:[0,0,0,0,0,0,0,0,0],ev});
  if(rp.S.tick>=rp.len){if(rp.exp){exp.done=true;exp.last=rp.S}rp=null;S=Object.assign(newSim(rnd()),look(S))}}
 function frame(now){acc+=Math.min(100,now-last);last=now;let n=0;
+ if(exp&&exp.off){acc=0;requestAnimationFrame(frame);return} // a frame-by-frame export owns the canvas
  while(acc>=1000/60&&n++<5){acc-=1000/60;if(rp)stepReplay();else{const inp=liveInput();ctrl(inp);if(rec){inp.ev.forEach(e=>rec.events.push({tick:S.tick+1,type:'button',id:e.id,down:e.down}));rec.axes.push(inp.ax)}step(S,inp);if(rec)rec.rows.push(S.row.join(','));rumble()}
-  if(exp&&exp.done)break;for(const L of LAYERS)stepLayer(L)}
+  if(exp&&exp.done)break;stepLayers(tlOn()?AU.songT():null)}
  const V=rp?rp.S:exp&&exp.done?exp.last:S;render(V,!rp&&!exp,showRet);warpPost(V);if(exp&&exp.done&&exp.mr.state==='recording')exp.mr.stop();
- {const ht=document.querySelector('#hud .t');if(ht)ht.textContent=exp?'EXPORT':rp?'REPLAY':(V.view==='type'?'TYPOGRAPHY':'EMBROIDERY')}st.textContent=exp?'⤓ exporting video… '+(rp?Math.round(100*rp.S.tick/rp.len):100)+'%':(pad?'🎮 pad':'⌨ keyboard (press a pad button to connect)')+(MO.src?' · motion: '+MO.src:'')+' · '+(V.view==='type'?'typography':'embroidery')+' · '+V.dim+' · tick '+V.tick+(rec?' · REC':'')+(rp?' · replay':'')+
-  (LAYERS.length?' · layers '+LAYERS.length:'')+(loopRec?' · ● LOOP '+(loopRec.log.length/60).toFixed(1)+'s':'')+(sel>=0?' · editing layer '+(sel+1)+' (D-pad ↓ next)':'');requestAnimationFrame(frame)}
+ {const ht=document.querySelector('#hud .t');if(ht)ht.textContent=exp?'EXPORT':rp?'REPLAY':(V.view==='type'?'TYPOGRAPHY':'EMBROIDERY')}{const t=exp?'⤓ exporting video… '+(rp?Math.round(100*rp.S.tick/rp.len):100)+'%':(pad?'🎮 pad':'⌨ keyboard (press a pad button to connect)')+(MO.src?' · motion: '+MO.src:'')+' · '+(V.view==='type'?'typography':'embroidery')+' · '+V.dim+' · tick '+V.tick+(rec?' · REC':'')+(rp?' · replay':'')+
+  (LAYERS.length?' · layers '+LAYERS.length:'')+(loopRec?' · ● LOOP '+(loopRec.log.length/60).toFixed(1)+'s':'')+(sel>=0?' · editing layer '+(sel+1)+' (D-pad ↓ next)':'');
+  // a message written elsewhere (layer added, video exported…) stays up for 4 s before the live readout takes over again
+  if(exp||st.textContent===stAuto||(stUntil||(stUntil=now+4e3))<=now){st.textContent=stAuto=t;stUntil=0}}requestAnimationFrame(frame)}
+let stAuto='',stUntil=0;
 $('bExp').onclick=exportVideo;$('bPng').onclick=exportPNG;
 const sizeNote=()=>{const[w,h]=outDims();st.textContent='Format '+FMT+' · export '+outTag().split('_')[0]+' ('+w+'×'+h+')'};
 $('sRes').value=String(OUT_P);$('sRes').onchange=e=>{OUT_P=+e.target.value;try{localStorage.setItem('padmotion.outP',OUT_P)}catch(_){}e.target.blur();sizeNote()};
@@ -2171,23 +2254,41 @@ const AU={clock:()=>0,next:0,on:false,src:'',bpm:0,beat:0,phase:0,pulse:0,onset:
  const pk=[1,1,1],bands=[[30,150],[150,2000],[2000,10000]],mus=$('mus'),bPc=$('bPc'),bFile=$('bFile'),fIn=$('fAud');
  const say=m=>{AU.msg=m;AU.msgT=performance.now()+5000};
  function stop(){if(stream)stream.getTracks().forEach(t=>t.stop());if(el){el.pause();el.removeAttribute('src');el.load()}if(url)URL.revokeObjectURL(url);if(node)try{node.disconnect()}catch(e){}
-  stream=el=url=node=null;Object.assign(AU,{on:false,src:'',bpm:0,beat:0,phase:0,pulse:0,bass:0,mid:0,high:0});bPc.classList.remove('on');bFile.classList.remove('on')}
+  stream=el=url=node=null;Object.assign(AU,{file:null,buf:null,on:false,src:'',bpm:0,beat:0,phase:0,pulse:0,bass:0,mid:0,high:0});bPc.classList.remove('on');bFile.classList.remove('on')}
  function start(src,n){ac.resume();node=n;an=ac.createAnalyser();an.fftSize=2048;an.smoothingTimeConstant=0;n.connect(an);fq=new Uint8Array(an.frequencyBinCount);prev=null;flux=[];ons=[];lastOn=-1;next=0;cand=0;candN=0;pk.fill(1);
   Object.assign(AU,{on:true,src,bpm:0,beat:0});(src==='pc'?bPc:bFile).classList.add('on')}
  const ctx=()=>ac||(ac=new (window.AudioContext||window.webkitAudioContext)());AU.clock=()=>ac?ac.currentTime:0;
  bPc.onclick=async()=>{bPc.blur();if(AU.src==='pc'){stop();return}stop();
   if(!navigator.mediaDevices||!navigator.mediaDevices.getDisplayMedia){say('PC audio needs Chrome or Edge on a computer');return}
-  try{const s=await navigator.mediaDevices.getDisplayMedia({video:true,audio:{echoCancellation:false,noiseSuppression:false,autoGainControl:false},systemAudio:'include'});
+  // some browsers reject the extra audio options; those get a second, plain request
+  const ask=o=>navigator.mediaDevices.getDisplayMedia(o);
+  try{let s;try{s=await ask({video:true,audio:{echoCancellation:false,noiseSuppression:false,autoGainControl:false},systemAudio:'include'})}
+   catch(e){if(e.name==='TypeError'||e.name==='NotSupportedError'||e.name==='OverconstrainedError')s=await ask({video:true,audio:true});else throw e}
    const at=s.getAudioTracks();s.getVideoTracks().forEach(t=>t.stop());
    if(!at.length){say('No sound shared: pick "Entire screen" and tick "Share system audio"');return}
    stream=new MediaStream(at);at[0].onended=()=>{if(AU.src==='pc')stop()};start('pc',ctx().createMediaStreamSource(stream))}
-  catch(e){say('PC audio cancelled')}};
+  catch(e){say(e.name==='NotAllowedError'?'PC audio cancelled or blocked: allow screen sharing for this site, pick "Entire screen" and tick "Share system audio"':
+   e.name==='NotFoundError'?'No screen to share was found':'PC audio failed ('+e.name+': '+e.message+')')}};
  bFile.onclick=()=>{bFile.blur();if(AU.src==='file'){stop();return}fIn.click()};
  fIn.onchange=()=>{const fl=fIn.files[0];fIn.value='';if(!fl)return;stop();ctx();url=URL.createObjectURL(fl);el=new Audio(url);el.loop=true;
-  const n=ac.createMediaElementSource(el);n.connect(ac.destination);el.play().then(()=>start('file',n)).catch(()=>{say('Could not play that file');stop()});AU.name=fl.name.replace(/\.[^.]+$/,'')};
+  const n=ac.createMediaElementSource(el);n.connect(ac.destination);el.play().then(()=>start('file',n)).catch(()=>{say('Could not play that file');stop()});AU.name=fl.name.replace(/\.[^.]+$/,'');AU.file=fl};
  // for the video export: where the song is (FILE only), jumping to a point in it, and its sound as a track to record
  let dest=null;
  AU.songT=()=>AU.src==='file'&&el?el.currentTime:null;
+ AU.dur=()=>AU.src==='file'&&el&&isFinite(el.duration)?el.duration:0;
+ AU.decoded=async()=>{if(!AU.file||!ac)return null;if(!AU.buf)try{AU.buf=await ac.decodeAudioData(await AU.file.arrayBuffer())}catch(e){return null}return AU.buf};
+ // the beat grid in song time (a beat's position in the song and the beat length), from the live beat clock
+ AU.grid=()=>AU.src==='file'&&el&&AU.bpm&&ac?{t0:el.currentTime+(AU.next-ac.currentTime),P:60/AU.bpm}:null;
+ // per-frame bass / high levels and beat pulse for a stretch of the song, for the export: band energies from two simple
+ // filters, in decibels and against a slowly falling peak like the live meters, and the pulse decaying from each beat
+ AU.envelope=(b,T0,n,fps,g)=>{const sr=b.sampleRate,N=b.length,x0=b.getChannelData(0),x1=b.numberOfChannels>1?b.getChannelData(1):x0,hop=sr/fps,
+   aL=1-Math.exp(-2*Math.PI*150/sr),aH=1-Math.exp(-2*Math.PI*2000/sr),o={bass:new Float32Array(n),high:new Float32Array(n),pulse:new Float32Array(n)},pk=[.05,.05];
+  let l1=0,l2=0,lh=0,p=Math.round(T0*sr);const db=(e,m)=>Math.max(0,Math.min(1,(10*Math.log10(e/m+1e-12)+100)/70));
+  for(let f=0;f<n;f++){const m=Math.round((f+1)*hop)-Math.round(f*hop);let eb=0,eh=0;
+   for(let i=0;i<m;i++){const j=((p+i)%N+N)%N,s=(x0[j]+x1[j])/2;l1+=aL*(s-l1);l2+=aL*(l1-l2);lh+=aH*(s-lh);const h=s-lh;eb+=l2*l2;eh+=h*h}p+=m;
+   const vb=db(eb,m),vh=db(eh,m);pk[0]=Math.max(vb,pk[0]*.996,.05);pk[1]=Math.max(vh,pk[1]*.996,.05);o.bass[f]=vb/pk[0];o.high[f]=vh/pk[1];
+   if(g){const t=T0+f/fps,since=((t-g.t0)%g.P+g.P)%g.P;o.pulse[f]=Math.exp(-7*since)}}
+  return o};
  AU.seek=t=>{if(AU.src==='file'&&el){el.currentTime=Math.max(0,t);if(el.paused)el.play().catch(()=>{})}};
  AU.tracks=()=>{if(AU.src==='pc'&&stream)return stream.getAudioTracks().map(t=>t.clone());
   if(AU.src==='file'&&node){if(!dest)dest=ac.createMediaStreamDestination();node.connect(dest);return dest.stream.getAudioTracks()}return[]};
@@ -2216,5 +2317,29 @@ const AU={clock:()=>0,next:0,on:false,src:'',bpm:0,beat:0,phase:0,pulse:0,onset:
   return '<span class="src">♪ '+(AU.src==='pc'?'PC AUDIO':(AU.name||'FILE')).toUpperCase().slice(0,22)+'</span> <span class="bpm">'+(AU.bpm?Math.round(AU.bpm)+' BPM':'listening…')+'</span> <span class="beats">'+d+'</span>'+
    '<span class="lv">B '+bar(AU.bass)+'  M '+bar(AU.mid)+'  H '+bar(AU.high)+'</span>'}
  tick()})();
+// OVERLAY / TIMELINE switch and the timeline strip: the song as a track (one faint line per bar), every clip as a block in
+// its layer's thread colour, stacked in lanes where clips overlap. Click a clip to mute / unmute it, right-click to delete
+// it, click the track to jump the song there. Rebuilt only when the clips change; the playhead moves every frame
+(()=>{const bTl=$('bTl'),box=$('tline'),trk=$('tlTrk'),head=$('tlHead'),tT=$('tlT'),hint=$('tlHint');let sig='';
+ bTl.onclick=()=>{bTl.blur();TL=!TL;bTl.textContent=TL?'▬ Timeline':'▤ Overlay';bTl.classList.toggle('on',TL);LAYERS.forEach(layerReset);sig='';
+  st.textContent=TL?(AU.src==='file'?'Timeline: each loop plays once, where you recorded it in the song':'Timeline: load a song with ♪ FILE to place clips on it'):'Overlay: every loop repeats on top of the others'};
+ const pick=e=>{const d=e.target.closest('.clip');return d?+d.dataset.i:-1};
+ trk.onclick=e=>{const i=pick(e);if(i>=0){const L=LAYERS[i];if(L){L.mute=!L.mute;sig=''}return}
+  const D=AU.dur(),r=trk.getBoundingClientRect();if(D)AU.seek(Math.max(0,Math.min(1,(e.clientX-r.left)/r.width))*D)};
+ trk.oncontextmenu=e=>{const i=pick(e);if(i<0)return;e.preventDefault();LAYERS.splice(i,1);if(sel>=LAYERS.length)sel=LAYERS.length-1;sig=''};
+ function draw(){requestAnimationFrame(draw);const show=TL&&!exp;box.hidden=!show;if(!show)return;
+  const D=AU.dur();hint.style.visibility=D?'':'hidden';
+  if(!D){tT.textContent='load a song with ♪ FILE';if(sig!=='none'){trk.querySelectorAll('.clip').forEach(c=>c.remove());sig='none'}head.style.left='0';return}
+  const t=AU.songT()||0;tT.textContent=mmss(t)+' / '+mmss(D)+' · '+LAYERS.length+' clip'+(LAYERS.length===1?'':'s');head.style.left=(100*t/D)+'%';
+  const s=D+'|'+Math.round(AU.bpm)+'|'+sel+'|'+LAYERS.map(L=>[L.songT0,L.log.length,L.sp,L.mute,L.pal].join()).join(';');if(s===sig)return;sig=s;
+  trk.style.setProperty('--bw',AU.bpm?(100*4*60/Math.round(AU.bpm)/D)+'%':'100%');
+  trk.querySelectorAll('.clip').forEach(c=>c.remove());const ends=[];
+  LAYERS.map((L,i)=>[L,i]).sort((a,b)=>(a[0].songT0||0)-(b[0].songT0||0)).forEach(([L,i])=>{const a=L.songT0||0,b=clipEnd(L);
+   let lane=ends.findIndex(e=>e<=a);if(lane<0){lane=ends.length;ends.push(0)}ends[lane]=b;
+   const d=document.createElement('div');d.className='clip'+(L.mute?' mute':'')+(i===sel?' sel':'');d.dataset.i=i;d.textContent=i+1;
+   d.style.cssText='--c:'+THREAD[(i+L.pal)%7]+';left:'+(100*a/D)+'%;width:'+(100*(b-a)/D)+'%;top:'+(lane*21)+'px';
+   d.title='Clip '+(i+1)+' · '+mmss(a)+'–'+mmss(b)+(L.mute?' · muted':'')+' · click: '+(L.mute?'unmute':'mute')+' · right-click: delete';trk.appendChild(d)});
+  trk.style.height=Math.max(24,ends.length*21+3)+'px'}
+ draw()})();
 requestAnimationFrame(t=>{last=t;frame(t)});
 </script></body></html>
